@@ -1,0 +1,10 @@
+{
+  "name": "pastel-virtual-bookshelf-root",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "npm --prefix pastel-virtual-bookshelf run dev",
+    "build": "npm --prefix pastel-virtual-bookshelf run build",
+    "preview": "npm --prefix pastel-virtual-bookshelf run preview"
+  }
+}
