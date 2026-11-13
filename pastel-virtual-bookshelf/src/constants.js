@@ -131,6 +131,52 @@ export const REGULAR_THEMES = [
       shelfTrim: "#5f442e"
     },
     swatches: ["#6a4c37", "#b88a62", "#f5eee4", "#8c705d"]
+  },
+  {
+    id: "midnight-dark",
+    name: "Midnight Library (Dark)",
+    description: "Deep obsidian charcoal, soft starlight violet, and warm candlelit gold. Elegant, calming night mode.",
+    isDark: true,
+    colors: {
+      primary: "#9d8cd7",
+      primaryHover: "#b4a4e8",
+      accent: "#e2b868",
+      bgMain: "#121319",
+      bgCard: "#1a1c24",
+      bgMuted: "#232632",
+      border: "#2f3344",
+      textHead: "#f2f3f8",
+      textBody: "#c5c8d8",
+      textMuted: "#878b9e",
+      woodLight: "#3d3228",
+      woodDark: "#221a13",
+      shelfPlank: "linear-gradient(180deg, #3d3228, #2a2017 48%, #19130d)",
+      shelfTrim: "#140e09"
+    },
+    swatches: ["#121319", "#1a1c24", "#9d8cd7", "#e2b868"]
+  },
+  {
+    id: "velvet-noir",
+    name: "Dark Academia Nocturne",
+    description: "Warm espresso, dark mahogany, antique parchment and amber candlelight. Rich, scholarly and cozy.",
+    isDark: true,
+    colors: {
+      primary: "#d99b66",
+      primaryHover: "#e8b07d",
+      accent: "#8aa888",
+      bgMain: "#161412",
+      bgCard: "#201c19",
+      bgMuted: "#2a2521",
+      border: "#3a332c",
+      textHead: "#f8f3ed",
+      textBody: "#cdc4b8",
+      textMuted: "#8f8477",
+      woodLight: "#3e3024",
+      woodDark: "#241b12",
+      shelfPlank: "linear-gradient(180deg, #3e3024, #271d14 48%, #17110a)",
+      shelfTrim: "#130d07"
+    },
+    swatches: ["#161412", "#201c19", "#d99b66", "#f8f3ed"]
   }
 ];
 
@@ -337,6 +383,151 @@ export const FESTIVE_THEMES = [
       cornerMotif: "constellation",
       quote: "365 new chapters waiting to be written and lived."
     }
+  },
+  {
+    id: "festive-rakhi",
+    name: "Raksha Bandhan",
+    badge: "Bonds of Love",
+    description: "Silken rose pink, golden thread amber, royal crimson, and turquoise accent. Celebrates sacred bonds of friendship and family.",
+    colors: {
+      primary: "#b83260",
+      primaryHover: "#9a234e",
+      accent: "#e09e32",
+      bgMain: "#fff8fb",
+      bgCard: "#ffffff",
+      bgMuted: "#faedf3",
+      border: "#ecd3e0",
+      textHead: "#451829",
+      textBody: "#683348",
+      textMuted: "#96657a",
+      woodLight: "#bd8aa4",
+      woodDark: "#85516b",
+      shelfPlank: "linear-gradient(180deg, #ca9db3, #a97790 48%, #815269)",
+      shelfTrim: "#6b3f55"
+    },
+    swatches: ["#db2777", "#f59e0b", "#06b6d4", "#fdf2f8"],
+    decorations: {
+      shelfIcon: "rakhi",
+      ambientIcon: "silk-sparkle",
+      cornerMotif: "mandala",
+      quote: "A sibling and true friend are life's rarest, sweetest chapters."
+    }
+  },
+  {
+    id: "festive-valentines",
+    name: "Valentine's Day",
+    badge: "Romance & Poetry",
+    description: "Blush pink, velvety crimson rose, warm vanilla cream, and romantic golden highlights. Tender love stories and poetry.",
+    colors: {
+      primary: "#be185d",
+      primaryHover: "#9d174d",
+      accent: "#f43f5e",
+      bgMain: "#fff5f8",
+      bgCard: "#ffffff",
+      bgMuted: "#fce7ef",
+      border: "#f9ccd9",
+      textHead: "#4a0e26",
+      textBody: "#701a3e",
+      textMuted: "#9e3f65",
+      woodLight: "#cfa6b9",
+      woodDark: "#94637a",
+      shelfPlank: "linear-gradient(180deg, #d8b7c7, #b88ba0 48%, #8f5f74)",
+      shelfTrim: "#784b5f"
+    },
+    swatches: ["#be185d", "#f43f5e", "#fda4af", "#fff1f2"],
+    decorations: {
+      shelfIcon: "rose",
+      ambientIcon: "heart",
+      cornerMotif: "wreath",
+      quote: "Whatever our souls are made of, his and mine are the same."
+    }
+  },
+  {
+    id: "festive-easter",
+    name: "Easter",
+    badge: "Spring Renewal",
+    description: "Pastel lilac, fresh spring mint, soft daffodil yellow, and robin egg blue. Rebirth of nature, fresh hope, and blooming stories.",
+    colors: {
+      primary: "#6d597a",
+      primaryHover: "#554460",
+      accent: "#b56576",
+      bgMain: "#faf8fc",
+      bgCard: "#ffffff",
+      bgMuted: "#f1ebf5",
+      border: "#e2d6ea",
+      textHead: "#35283e",
+      textBody: "#584664",
+      textMuted: "#8a7596",
+      woodLight: "#cbbcd4",
+      woodDark: "#94829e",
+      shelfPlank: "linear-gradient(180deg, #d3c6db, #b09eb8 48%, #887491)",
+      shelfTrim: "#725f7a"
+    },
+    swatches: ["#a78bfa", "#fde047", "#6ee7b7", "#f472b6"],
+    decorations: {
+      shelfIcon: "egg",
+      ambientIcon: "blossom",
+      cornerMotif: "vine",
+      quote: "Spring is far more than just a changing of seasons; it is a rebirth of the spirit."
+    }
+  },
+  {
+    id: "festive-sankranti",
+    name: "Makar Sankranti",
+    badge: "Solar Harvest",
+    description: "Sunny azure sky blue, golden solar amber, bright kite orange, and sugarcane green. Celebrating soaring dreams and sweet harvest.",
+    colors: {
+      primary: "#2563eb",
+      primaryHover: "#1d4ed8",
+      accent: "#f59e0b",
+      bgMain: "#f6faff",
+      bgCard: "#ffffff",
+      bgMuted: "#eaf2fd",
+      border: "#d0e1f9",
+      textHead: "#152c5b",
+      textBody: "#29467d",
+      textMuted: "#5e7cb5",
+      woodLight: "#a3b8cc",
+      woodDark: "#677f99",
+      shelfPlank: "linear-gradient(180deg, #b0c4d8, #869cb3 48%, #5f748a)",
+      shelfTrim: "#4e6175"
+    },
+    swatches: ["#0284c7", "#f59e0b", "#10b981", "#ffedd5"],
+    decorations: {
+      shelfIcon: "kite",
+      ambientIcon: "sunburst",
+      cornerMotif: "sugarcane",
+      quote: "Til-gul ghya, god god bola: May your words and stories sweeten every day."
+    }
+  },
+  {
+    id: "festive-cny",
+    name: "Chinese New Year",
+    badge: "Lunar Prosperity",
+    description: "Imperial vermilion red, prosperous gold foil, lucky amber, and plum blossom pink. Welcoming lunar wisdom, fortune, and spring.",
+    colors: {
+      primary: "#b91c1c",
+      primaryHover: "#991b1b",
+      accent: "#eab308",
+      bgMain: "#fffaf7",
+      bgCard: "#ffffff",
+      bgMuted: "#faeee7",
+      border: "#eed5c8",
+      textHead: "#451212",
+      textBody: "#692525",
+      textMuted: "#965555",
+      woodLight: "#8c5643",
+      woodDark: "#5c3324",
+      shelfPlank: "linear-gradient(180deg, #9b614c, #774330 48%, #542b1c)",
+      shelfTrim: "#441e12"
+    },
+    swatches: ["#dc2626", "#eab308", "#7f1d1d", "#fef08a"],
+    decorations: {
+      shelfIcon: "cny-lantern",
+      ambientIcon: "gold-coin",
+      cornerMotif: "knot",
+      quote: "A book is like a garden carried in the pocket."
+    }
   }
 ];
 
@@ -377,33 +568,136 @@ export const LITERARY_QUOTES = [
   { quote: "A room without books is like a body without a soul.", author: "Cicero" }
 ];
 
+export const SUPPORTED_LANGUAGES = [
+  { code: "all", label: "🌐 All Languages (Global Archive)", name: "All Languages" },
+  { code: "hin", label: "🇮🇳 Hindi (हिन्दी)", name: "Hindi" },
+  { code: "san", label: "🕉️ Sanskrit (संस्कृतम्)", name: "Sanskrit" },
+  { code: "eng", label: "🇬🇧 English", name: "English" },
+  { code: "spa", label: "🇪🇸 Spanish (Español)", name: "Spanish" },
+  { code: "fre", label: "🇫🇷 French (Français)", name: "French" },
+  { code: "ger", label: "🇩🇪 German (Deutsch)", name: "German" },
+  { code: "jpn", label: "🇯🇵 Japanese (日本語)", name: "Japanese" },
+  { code: "chi", label: "🇨🇳 Chinese (中文)", name: "Chinese" },
+  { code: "rus", label: "🇷🇺 Russian (Русский)", name: "Russian" },
+  { code: "ara", label: "🇸🇦 Arabic (العربية)", name: "Arabic" },
+  { code: "ita", label: "🇮🇹 Italian (Italiano)", name: "Italian" },
+  { code: "por", label: "🇵🇹 Portuguese (Português)", name: "Portuguese" },
+  { code: "ben", label: "🇮🇳 Bengali (বাংলা)", name: "Bengali" },
+  { code: "tam", label: "🇮🇳 Tamil (தமிழ்)", name: "Tamil" },
+  { code: "urd", label: "🇵🇰 Urdu (اردو)", name: "Urdu" },
+  { code: "kor", label: "🇰🇷 Korean (한국어)", name: "Korean" },
+  { code: "per", label: "🇮🇷 Persian (فارسی)", name: "Persian" }
+];
+
+export const POPULAR_GENRES = [
+  { id: "vedabase", label: "🪷 Vedabase Archive", query: "vedabase", subject: "vedabase" },
+  { id: "spirituality", label: "✨ Spirituality & Mysticism", query: "spirituality", subject: "spirituality" },
+  { id: "vedanta", label: "🕉️ Vedanta & Gita", query: "bhagavad gita", subject: "hinduism" },
+  { id: "meditation", label: "🧘 Meditation & Zen", query: "meditation zen", subject: "buddhism" },
+  { id: "philosophy", label: "🏛️ Philosophy & Stoicism", query: "philosophy stoicism", subject: "philosophy" },
+  { id: "classics", label: "📜 World Classics", query: "classic literature", subject: "classic_literature" },
+  { id: "hindi", label: "🇮🇳 Hindi Literature (हिन्दी)", query: "munshi premchand", lang: "hin" },
+  { id: "sanskrit", label: "🕉️ Sanskrit Sacred Texts", query: "sanskrit upanishad gita", lang: "san" },
+  { id: "selfhelp", label: "💡 Self-Help & Mind", query: "self-help habits", subject: "self-help" },
+  { id: "thriller", label: "🔍 Mystery & Thriller", query: "psychological thriller", subject: "mystery" },
+  { id: "scifi", label: "🌌 Sci-Fi & Fantasy", query: "fantasy sci-fi", subject: "science_fiction" },
+  { id: "poetry", label: "🌸 Poetry & Sufism", query: "rumi poetry", subject: "poetry" }
+];
+
+export const COMPREHENSIVE_GENRES_LIST = [
+  "🪷 Vedabase & Bhaktivedanta Literature",
+  "Śrīmad-Bhāgavatam & Purāṇic Classics",
+  "Bhagavad-gītā & Upaniṣadic Wisdom",
+  "Gauḍīya Vaiṣṇava Ācārya Literature",
+  "Spirituality & Inner Peace",
+  "Advaita Vedanta & Eastern Philosophy",
+  "Meditation, Yoga & Mindfulness",
+  "Sacred Texts & Ancient Scriptures",
+  "Stoicism & Classical Philosophy",
+  "World Classics & Literary Fiction",
+  "Hindi Literature (हिंदी साहित्य)",
+  "Sanskrit Classics (संस्कृत वाङ्मय)",
+  "Spanish & Latin American Literature",
+  "French Literature & Philosophy",
+  "Japanese Literature & Zen",
+  "Russian Classics & Drama",
+  "Chinese Philosophy & Taoism",
+  "Arabic & Persian Poetry / Sufism",
+  "Contemporary Fiction & Romance",
+  "Psychological Thriller & Mystery",
+  "Science Fiction & Speculative",
+  "Fantasy & Magical Realism",
+  "Self-Help & Personal Growth",
+  "Psychology & Behavioral Science",
+  "Finance, Economics & Wealth",
+  "Biography & Historical Memoir",
+  "Science, Nature & Cosmos",
+  "Poetry & Verses",
+  "Mythology & World Epics",
+  "Young Adult (YA)"
+];
+
 export function getSeasonalThemeSuggestion() {
   const now = new Date();
-  const month = now.getMonth(); // 0 = Jan, 9 = Oct, 10 = Nov, 11 = Dec
+  const month = now.getMonth(); // 0 = Jan, 1 = Feb, ... 10 = Nov, 11 = Dec
   const day = now.getDate();
 
   // November (Diwali season)
   if (month === 10) {
     return {
       themeId: "festive-diwali",
-      name: "Diwali Celebration",
-      reason: "It's the festive season of Diwali! Celebrate with golden glowing lights."
+      name: "Diwali",
+      icon: "🪔",
+      badge: "Festival of Lights",
+      reason: "Diwali is around the corner! Celebrate with golden glowing lights & diyas."
     };
   }
   // December (Christmas season)
   if (month === 11) {
     return {
       themeId: "festive-christmas",
-      name: "Cosy Christmas",
-      reason: "Winter magic is here! Welcome festive fairy lights and snow."
+      name: "Christmas",
+      icon: "🎄",
+      badge: "Winter Magic",
+      reason: "Christmas is around the corner! Welcome festive fairy lights, pine & falling snow."
     };
   }
-  // January (New Year)
+  // January (Makar Sankranti & New Year)
   if (month === 0) {
+    if (day >= 8 && day <= 20) {
+      return {
+        themeId: "festive-sankranti",
+        name: "Makar Sankranti",
+        icon: "🪁",
+        badge: "Solar Harvest",
+        reason: "Makar Sankranti is around the corner! Celebrate with soaring kites & golden harvest."
+      };
+    }
     return {
       themeId: "festive-newyear",
       name: "New Year Starlight",
+      icon: "⭐",
+      badge: "Fresh Beginnings",
       reason: "A brand new year of reading adventures awaits!"
+    };
+  }
+  // February (Valentine's Day & Chinese New Year)
+  if (month === 1) {
+    if (day <= 15) {
+      return {
+        themeId: "festive-valentines",
+        name: "Valentine's Day",
+        icon: "💖",
+        badge: "Romance & Poetry",
+        reason: "Valentine's Day is around the corner! Curl up with tender love stories & poetry."
+      };
+    }
+    return {
+      themeId: "festive-cny",
+      name: "Chinese New Year",
+      icon: "🧧",
+      badge: "Lunar Prosperity",
+      reason: "Spring Festival & Lunar New Year are around the corner! Welcome luck & prosperity."
     };
   }
   // March (Holi)
@@ -411,17 +705,66 @@ export function getSeasonalThemeSuggestion() {
     return {
       themeId: "festive-holi",
       name: "Holi Joy",
-      reason: "Celebrate spring with gentle pastel colour splashes."
+      icon: "🎨",
+      badge: "Festival of Colours",
+      reason: "Holi is around the corner! Celebrate spring with vibrant pastel colour splashes."
     };
   }
-  // October (Halloween)
-  if (month === 9) {
+  // April (Easter & Eid)
+  if (month === 3) {
+    if (day <= 15) {
+      return {
+        themeId: "festive-eid",
+        name: "Blessed Eid",
+        icon: "🌙",
+        badge: "Celebration & Peace",
+        reason: "Eid celebration is around the corner! Embrace peace, harmony, and inspiring tales."
+      };
+    }
+    return {
+      themeId: "festive-easter",
+      name: "Easter Renewal",
+      icon: "🐣",
+      badge: "Spring Renewal",
+      reason: "Easter is around the corner! Welcome blooming blossoms, butterflies & fresh hope."
+    };
+  }
+  // August (Raksha Bandhan)
+  if (month === 7) {
+    return {
+      themeId: "festive-rakhi",
+      name: "Raksha Bandhan",
+      icon: "🧵",
+      badge: "Bonds of Love",
+      reason: "Raksha Bandhan is around the corner! Celebrate sacred bonds of family & friendship."
+    };
+  }
+  // September - October (Durga Puja & Navratri, Halloween)
+  if (month === 8 || (month === 9 && day <= 20)) {
+    return {
+      themeId: "festive-navratri",
+      name: "Navratri & Durga Puja",
+      icon: "🪕",
+      badge: "Divine Grace",
+      reason: "Sharodiya Durga Puja & Navratri are around the corner! Celebrate courage & divine grace."
+    };
+  }
+  if (month === 9 && day > 20) {
     return {
       themeId: "festive-halloween",
-      name: "Enchanted Halloween",
-      reason: "Crisp autumn leaves and mysterious cozy evenings are here."
+      name: "Halloween",
+      icon: "🎃",
+      badge: "Autumn Mystery",
+      reason: "Halloween is around the corner! Cozy thrills and magical mystery pages await."
     };
   }
-  // Default suggestion if no major festival matches this exact date
-  return null;
+
+  // Fallback: Diwali during Autumn
+  return {
+    themeId: "festive-diwali",
+    name: "Diwali",
+    icon: "🪔",
+    badge: "Festival of Lights",
+    reason: "Diwali is around the corner! Celebrate with golden glowing lights & diyas."
+  };
 }

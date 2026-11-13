@@ -1,8 +1,15 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { X, Search, Plus, Check, BookOpen, AlertCircle, Sparkles } from "lucide-react";
-import { searchBooksApi } from "../api";
-import { BOOK_SPINE_PALETTES } from "../constants";
+import { X, Search, Plus, Check, BookOpen, AlertCircle, Sparkles, Layers, Globe } from "lucide-react";
+import { searchBooksApi, POPULAR_AND_TRENDING_BOOKS } from "../api";
+import {
+  BOOK_SPINE_PALETTES,
+  SUPPORTED_LANGUAGES,
+  POPULAR_GENRES,
+  COMPREHENSIVE_GENRES_LIST
+} from "../constants";
+import BookSpine from "./BookSpine";
+import { calculateSpineThickness } from "../utils/bookDimensions";
 
 export default function AddBookModal({
   existingBooks = [],
@@ -12,20 +19,24 @@ export default function AddBookModal({
 }) {
   const [mode, setMode] = useState(initialBook ? "manual" : "search"); // 'search' | 'manual'
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchType, setSearchType] = useState("all"); // 'all' | 'title' | 'author'
+  const [searchType, setSearchType] = useState("all"); // 'all' | 'title' | 'author' | 'genre' | 'isbn'
+  const [selectedLanguage, setSelectedLanguage] = useState("all");
+  const [activeGenreChip, setActiveGenreChip] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [duplicateWarning, setDuplicateWarning] = useState("");
+  const [selectedBookForEditions, setSelectedBookForEditions] = useState(null);
 
   // Form State
   const [form, setForm] = useState(
     initialBook || {
       title: "",
       author: "",
-      genre: "Literature",
+      genre: "Spirituality & Inner Peace",
       year: new Date().getFullYear().toString(),
       pages: 280,
+      format: "Hardcover",
       publisher: "",
       isbn: "",
       cover: "",
@@ -39,14 +50,30 @@ export default function AddBookModal({
     }
   );
 
-  const handleSearch = async (e) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) return;
+  const handleSearch = async (
+    e,
+    overrideQuery = null,
+    overrideType = null,
+    overrideLang = null
+  ) => {
+    if (e) e.preventDefault();
+    const q = overrideQuery !== null ? overrideQuery : searchQuery;
+    const type = overrideType !== null ? overrideType : searchType;
+    const lang = overrideLang !== null ? overrideLang : selectedLanguage;
+
+    if (!q.trim() && lang === "all" && type === "all") {
+      setHasSearched(false);
+      setSearchResults([]);
+      return;
+    }
+
     setIsSearching(true);
     setHasSearched(true);
     setDuplicateWarning("");
+    setSelectedBookForEditions(null);
+
     try {
-      const results = await searchBooksApi(searchQuery, searchType);
+      const results = await searchBooksApi(q, type, lang);
       setSearchResults(results);
     } catch {
       setSearchResults([]);
@@ -55,7 +82,38 @@ export default function AddBookModal({
     }
   };
 
+  const handleSelectGenreChip = (chip) => {
+    if (activeGenreChip === chip.id) {
+      // Toggle off
+      setActiveGenreChip(null);
+      setSearchQuery("");
+      setSearchType("all");
+      setSelectedLanguage("all");
+      setHasSearched(false);
+      setSearchResults([]);
+      return;
+    }
+
+    setActiveGenreChip(chip.id);
+    const targetQuery = chip.query || "";
+    const targetLang = chip.lang || "all";
+    const targetType = chip.subject ? "genre" : "all";
+
+    setSearchQuery(targetQuery);
+    setSelectedLanguage(targetLang);
+    setSearchType(targetType);
+    handleSearch(null, targetQuery, targetType, targetLang);
+  };
+
   const handleSelectSearchResult = (selectedBook) => {
+    if (selectedBook.editionsList && selectedBook.editionsList.length > 1) {
+      setSelectedBookForEditions(selectedBook);
+      return;
+    }
+    applySelectedBook(selectedBook);
+  };
+
+  const applySelectedBook = (selectedBook, chosenEdition = null) => {
     // Check duplicate
     const isDup = existingBooks.some(
       (b) =>
@@ -71,19 +129,27 @@ export default function AddBookModal({
       return;
     }
 
+    const pages = chosenEdition?.pages || selectedBook.pages || 280;
+    const year = chosenEdition?.year || selectedBook.year || "";
+    const publisher = chosenEdition?.publisher || selectedBook.publisher || "Library Edition";
+    const format = chosenEdition?.format || selectedBook.format || "Hardcover";
+
     setForm((prev) => ({
       ...prev,
       title: selectedBook.title,
       author: selectedBook.author,
-      year: selectedBook.year,
-      pages: selectedBook.pages,
-      publisher: selectedBook.publisher,
-      isbn: selectedBook.isbn,
-      cover: selectedBook.cover,
-      genre: selectedBook.genre,
+      year,
+      pages,
+      format,
+      publisher,
+      isbn: selectedBook.isbn || "",
+      cover: selectedBook.cover || "",
+      genre: selectedBook.genre || "Spirituality & Wisdom",
+      description: selectedBook.description || prev.description || "",
       spineColor: selectedBook.spineColor || prev.spineColor
     }));
 
+    setSelectedBookForEditions(null);
     setMode("manual"); // Switch to review & add
   };
 
@@ -108,7 +174,7 @@ export default function AddBookModal({
     const finalBook = {
       ...form,
       id: initialBook?.id || "book_" + Math.random().toString(36).substring(2, 9),
-      pages: Number(form.pages) || 250,
+      pages: Math.max(50, Number(form.pages) || 280),
       rating: Number(form.rating) || 0,
       completed:
         form.status === "read" && !form.completed
@@ -119,6 +185,8 @@ export default function AddBookModal({
     onSaveBook(finalBook);
     onClose();
   };
+
+  const previewThickness = calculateSpineThickness(form.pages, false);
 
   return (
     <div className="modal-backdrop-aesthetic" onClick={onClose}>
@@ -135,11 +203,11 @@ export default function AddBookModal({
 
         <div className="add-modal-header">
           <div className="aesthetic-badge">
-            <Sparkles size={13} /> {initialBook ? "EDIT STORY" : "ENRICH YOUR LIBRARY"}
+            <Sparkles size={13} /> {initialBook ? "EDIT STORY" : "UNIVERSAL WORLD BOOK ARCHIVE"}
           </div>
           <h2>{initialBook ? "Edit Book Details" : "Add a New Book"}</h2>
           <p className="modal-subtitle">
-            Search Open Library for verified covers and details, or craft your own custom book entry.
+            Explore 40M+ books across every genre—including Spirituality, Vedanta, Sacred Scriptures, Philosophy, World Classics, and literature in languages across the globe.
           </p>
         </div>
 
@@ -152,9 +220,10 @@ export default function AddBookModal({
               onClick={() => {
                 setMode("search");
                 setDuplicateWarning("");
+                setSelectedBookForEditions(null);
               }}
             >
-              <Search size={15} /> Search Book Database
+              <Search size={15} /> Global Book Search
             </button>
             <button
               type="button"
@@ -164,7 +233,7 @@ export default function AddBookModal({
                 setDuplicateWarning("");
               }}
             >
-              <BookOpen size={15} /> Manual & Custom Entry
+              <BookOpen size={15} /> Manual &amp; Custom Entry
             </button>
           </div>
         )}
@@ -182,12 +251,40 @@ export default function AddBookModal({
             <form onSubmit={handleSearch} className="search-box-row">
               <select
                 value={searchType}
-                onChange={(e) => setSearchType(e.target.value)}
+                onChange={(e) => {
+                  const newType = e.target.value;
+                  setSearchType(newType);
+                  if (searchQuery.trim()) {
+                    handleSearch(null, null, newType, null);
+                  }
+                }}
                 className="search-type-select"
+                title="Search Filter Category"
               >
-                <option value="all">All Fields</option>
+                <option value="all">All Fields &amp; Topics</option>
                 <option value="title">By Title</option>
                 <option value="author">By Author</option>
+                <option value="genre">By Genre / Subject</option>
+                <option value="isbn">By ISBN / ID</option>
+              </select>
+
+              <select
+                value={selectedLanguage}
+                onChange={(e) => {
+                  const newLang = e.target.value;
+                  setSelectedLanguage(newLang);
+                  if (searchQuery.trim() || hasSearched) {
+                    handleSearch(null, null, null, newLang);
+                  }
+                }}
+                className="search-language-select"
+                title="Filter by world language"
+              >
+                {SUPPORTED_LANGUAGES.map((l) => (
+                  <option key={l.code} value={l.code}>
+                    {l.label}
+                  </option>
+                ))}
               </select>
 
               <div className="search-input-field">
@@ -195,11 +292,15 @@ export default function AddBookModal({
                 <input
                   type="text"
                   placeholder={
-                    searchType === "title"
-                      ? "Search by book title (e.g. Pride and Prejudice)..."
+                    searchType === "genre"
+                      ? "Search genres or topics (e.g. Spirituality, Vedanta, Zen, Sci-Fi)..."
+                      : searchType === "title"
+                      ? "Search book title (e.g. Bhagavad Gita, The Power of Now)..."
                       : searchType === "author"
-                      ? "Search by author name (e.g. Virginia Woolf)..."
-                      : "Search by book title or author..."
+                      ? "Search author (e.g. Eckhart Tolle, Paramahansa Yogananda, Premchand)..."
+                      : selectedLanguage !== "all"
+                      ? "Search in selected language (titles, authors, scriptures)..."
+                      : "Search any book, spiritual text, author, or language..."
                   }
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -212,82 +313,248 @@ export default function AddBookModal({
               </button>
             </form>
 
+            {/* Quick Topic & Genre Filter Chips */}
+            <div className="search-genre-chips" title="Explore popular genres & traditions">
+              {POPULAR_GENRES.map((g) => (
+                <button
+                  key={g.id}
+                  type="button"
+                  className={`genre-filter-chip ${activeGenreChip === g.id ? "active" : ""}`}
+                  onClick={() => handleSelectGenreChip(g)}
+                >
+                  {g.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Edition Selection Drawer if triggered */}
+            {selectedBookForEditions && (
+              <div className="editions-selection-card">
+                <div className="editions-header">
+                  <h4>Choose Edition for &ldquo;{selectedBookForEditions.title}&rdquo;</h4>
+                  <button
+                    type="button"
+                    className="close-editions-btn"
+                    onClick={() => setSelectedBookForEditions(null)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+                <p className="editions-desc">
+                  Different editions have different page counts and bindings, which determines your physical book spine thickness:
+                </p>
+                <div className="editions-grid">
+                  <div
+                    className="edition-choice-item"
+                    onClick={() => applySelectedBook(selectedBookForEditions)}
+                  >
+                    <strong>Primary Edition ({selectedBookForEditions.year || "Standard"})</strong>
+                    <small>
+                      {selectedBookForEditions.pages} pages • {selectedBookForEditions.format || "Hardcover"}
+                    </small>
+                    <span className="publisher-tag">{selectedBookForEditions.publisher}</span>
+                  </div>
+                  {selectedBookForEditions.editionsList.map((ed, eIdx) => (
+                    <div
+                      key={eIdx}
+                      className="edition-choice-item"
+                      onClick={() => applySelectedBook(selectedBookForEditions, ed)}
+                    >
+                      <strong>{ed.format} ({ed.year})</strong>
+                      <small>{ed.pages} pages</small>
+                      <span className="publisher-tag">{ed.publisher}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Results Grid */}
             <div className="search-results-container">
               {isSearching ? (
                 <div className="search-loading-state">
                   <span className="spinner-sparkle">✦</span>
-                  <p>Leafing through library archives...</p>
+                  <p>Searching worldwide archives across genres &amp; languages...</p>
                 </div>
               ) : searchResults.length > 0 ? (
-                <div className="results-pinterest-grid">
-                  {searchResults.map((book) => {
-                    const isAlreadyAdded = existingBooks.some(
-                      (b) =>
-                        b.title.trim().toLowerCase() === book.title.trim().toLowerCase() ||
-                        (book.isbn && b.isbn && b.isbn === book.isbn)
-                    );
+                <>
+                  <div className="results-pinterest-grid">
+                    {searchResults.map((book) => {
+                      const isAlreadyAdded = existingBooks.some(
+                        (b) =>
+                          b.title.trim().toLowerCase() === book.title.trim().toLowerCase() ||
+                          (book.isbn && b.isbn && b.isbn === book.isbn)
+                      );
 
-                    return (
-                      <div
-                        key={book.openLibraryKey || book.title}
-                        className={`pinterest-book-card ${isAlreadyAdded ? "already-added" : ""}`}
-                      >
-                        <div className="card-cover-wrap">
-                          {book.cover ? (
-                            <img src={book.cover} alt={book.title} loading="lazy" />
-                          ) : (
-                            <div
-                              className="card-cover-fallback"
-                              style={{ backgroundColor: book.spineColor }}
-                            >
-                              <span>{book.title}</span>
-                            </div>
-                          )}
-                        </div>
-                        <div className="card-details">
-                          <h4 className="card-title" title={book.title}>
-                            {book.title}
-                          </h4>
-                          <p className="card-author">{book.author}</p>
-                          <div className="card-sub-info">
-                            {book.year && <span>{book.year}</span>}
-                            {book.pages && <span>• {book.pages}p</span>}
+                      return (
+                        <div
+                          key={book.openLibraryKey || `${book.title}_${book.author}`}
+                          className={`pinterest-book-card ${isAlreadyAdded ? "already-added" : ""}`}
+                        >
+                          <div className="card-cover-wrap">
+                            {book.cover ? (
+                              <img src={book.cover} alt={book.title} loading="lazy" />
+                            ) : (
+                              <div
+                                className="card-cover-fallback"
+                                style={{ backgroundColor: book.spineColor || "#5a7356" }}
+                              >
+                                <span>{book.title}</span>
+                              </div>
+                            )}
                           </div>
+                          <div className="card-details">
+                            <h4 className="card-title" title={book.title}>
+                              {book.title}
+                            </h4>
+                            <p className="card-author">{book.author}</p>
+                            <div className="card-sub-info">
+                              {book.year && <span>{book.year}</span>}
+                              <span>• {book.pages}p</span>
+                            </div>
 
-                          {isAlreadyAdded ? (
-                            <span className="already-on-shelf-badge">Already on Shelf ✓</span>
-                          ) : (
-                            <button
-                              type="button"
-                              className="select-book-btn"
-                              onClick={() => handleSelectSearchResult(book)}
-                            >
-                              <Plus size={14} /> Select & Add
-                            </button>
-                          )}
+                            {/* Genre & Language Badges */}
+                            <div className="card-badge-row">
+                              {book.genre && (
+                                <span className="card-genre-pill">
+                                  {book.genre.split(",")[0].trim()}
+                                </span>
+                              )}
+                              {book.languageLabel && (
+                                <span className="card-lang-pill">
+                                  {book.languageLabel.split("/")[0].trim()}
+                                </span>
+                              )}
+                            </div>
+
+                            {isAlreadyAdded ? (
+                              <span className="already-on-shelf-badge">Already on Shelf ✓</span>
+                            ) : (
+                              <button
+                                type="button"
+                                className="select-book-btn"
+                                onClick={() => handleSelectSearchResult(book)}
+                              >
+                                <Plus size={14} /> Select &amp; Review
+                              </button>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                  <div className="search-results-footer-hint">
+                    <span>Looking for a rare edition or private manuscript? </span>
+                    <button
+                      type="button"
+                      className="inline-manual-link"
+                      onClick={() => {
+                        const split = searchQuery.match(/^(.*?)\s+(?:by|of|from|written by)\s+(.*)$/i);
+                        if (split) {
+                          setForm((f) => ({ ...f, title: split[1].trim(), author: split[2].trim() }));
+                        } else {
+                          setForm((f) => ({ ...f, title: searchQuery.trim() }));
+                        }
+                        setMode("manual");
+                      }}
+                    >
+                      Add as custom book ✦
+                    </button>
+                  </div>
+                </>
               ) : hasSearched ? (
                 <div className="no-search-results">
-                  <p>No matching titles found in Open Library.</p>
+                  <p>No exact match found in online archives for &ldquo;{searchQuery}&rdquo;.</p>
                   <button
                     type="button"
                     className="switch-manual-link"
                     onClick={() => {
-                      setForm((f) => ({ ...f, title: searchQuery }));
+                      const split = searchQuery.match(/^(.*?)\s+(?:by|of|from|written by)\s+(.*)$/i);
+                      if (split) {
+                        setForm((f) => ({ ...f, title: split[1].trim(), author: split[2].trim() }));
+                      } else {
+                        setForm((f) => ({ ...f, title: searchQuery.trim() }));
+                      }
                       setMode("manual");
                     }}
                   >
-                    Click here to enter this book manually ✦
+                    Click here to add &ldquo;{searchQuery}&rdquo; as a custom book ✦
                   </button>
                 </div>
               ) : (
-                <div className="search-placeholder-prompt">
-                  <p>Type a book title or author above to browse matching editions.</p>
+                /* Curated World Library & Spiritual Treasures Starter Collection */
+                <div className="curated-starter-section">
+                  <div className="curated-section-header">
+                    <h4>
+                      <Sparkles size={15} /> Curated World Library &amp; Spiritual Treasures
+                    </h4>
+                    <small>Click any book or select a genre above to browse</small>
+                  </div>
+
+                  <div className="results-pinterest-grid">
+                    {POPULAR_AND_TRENDING_BOOKS.map((book) => {
+                      const isAlreadyAdded = existingBooks.some(
+                        (b) =>
+                          b.title.trim().toLowerCase() === book.title.trim().toLowerCase() ||
+                          (book.isbn && b.isbn && b.isbn === book.isbn)
+                      );
+
+                      return (
+                        <div
+                          key={book.openLibraryKey || `${book.title}_${book.author}`}
+                          className={`pinterest-book-card ${isAlreadyAdded ? "already-added" : ""}`}
+                        >
+                          <div className="card-cover-wrap">
+                            {book.cover ? (
+                              <img src={book.cover} alt={book.title} loading="lazy" />
+                            ) : (
+                              <div
+                                className="card-cover-fallback"
+                                style={{ backgroundColor: book.spineColor || "#5a7356" }}
+                              >
+                                <span>{book.title}</span>
+                              </div>
+                            )}
+                          </div>
+                          <div className="card-details">
+                            <h4 className="card-title" title={book.title}>
+                              {book.title}
+                            </h4>
+                            <p className="card-author">{book.author}</p>
+                            <div className="card-sub-info">
+                              {book.year && <span>{book.year}</span>}
+                              <span>• {book.pages}p</span>
+                            </div>
+
+                            <div className="card-badge-row">
+                              {book.genre && (
+                                <span className="card-genre-pill">
+                                  {book.genre.split(",")[0].trim()}
+                                </span>
+                              )}
+                              {book.languageLabel && (
+                                <span className="card-lang-pill">
+                                  {book.languageLabel.split("/")[0].trim()}
+                                </span>
+                              )}
+                            </div>
+
+                            {isAlreadyAdded ? (
+                              <span className="already-on-shelf-badge">Already on Shelf ✓</span>
+                            ) : (
+                              <button
+                                type="button"
+                                className="select-book-btn"
+                                onClick={() => handleSelectSearchResult(book)}
+                              >
+                                <Plus size={14} /> Select &amp; Review
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
@@ -297,151 +564,153 @@ export default function AddBookModal({
         {/* MANUAL / EDIT MODE */}
         {mode === "manual" && (
           <form onSubmit={handleSubmitForm} className="manual-form-grid">
-            <div className="form-field">
-              <label>Book Title *</label>
-              <input
-                type="text"
-                required
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                placeholder="Title of the story"
-              />
-            </div>
-
-            <div className="form-field">
-              <label>Author</label>
-              <input
-                type="text"
-                value={form.author}
-                onChange={(e) => setForm({ ...form, author: e.target.value })}
-                placeholder="Author name"
-              />
-            </div>
-
-            <div className="form-field">
-              <label>Genre / Category</label>
-              <input
-                type="text"
-                value={form.genre}
-                onChange={(e) => setForm({ ...form, genre: e.target.value })}
-                placeholder="e.g. Classic Literature, Mystery, Poetry"
-              />
-            </div>
-
-            <div className="form-field">
-              <label>Reading Status *</label>
-              <select
-                value={form.status}
-                onChange={(e) => setForm({ ...form, status: e.target.value })}
-                className="status-dropdown"
-              >
-                <option value="want">Want to Read (Goes to Virtual Bookshelf)</option>
-                <option value="currently">Currently Reading (Ribbon on Bookshelf)</option>
-                <option value="read">Already Read (Goes to 3D Read Stack)</option>
-              </select>
-            </div>
-
-            <div className="form-field">
-              <label>Publication Year</label>
-              <input
-                type="text"
-                value={form.year}
-                onChange={(e) => setForm({ ...form, year: e.target.value })}
-                placeholder="e.g. 1925"
-              />
-            </div>
-
-            <div className="form-field">
-              <label>Number of Pages</label>
-              <input
-                type="number"
-                min="1"
-                max="5000"
-                value={form.pages}
-                onChange={(e) => setForm({ ...form, pages: e.target.value })}
-                placeholder="e.g. 320"
-              />
-            </div>
-
-            <div className="form-field">
-              <label>Publisher</label>
-              <input
-                type="text"
-                value={form.publisher}
-                onChange={(e) => setForm({ ...form, publisher: e.target.value })}
-                placeholder="e.g. Penguin Classics"
-              />
-            </div>
-
-            <div className="form-field">
-              <label>ISBN</label>
-              <input
-                type="text"
-                value={form.isbn}
-                onChange={(e) => setForm({ ...form, isbn: e.target.value })}
-                placeholder="e.g. 9780141439518"
-              />
-            </div>
-
-            <div className="form-field full-width">
-              <label>Cover Image URL (Direct Link)</label>
-              <input
-                type="url"
-                value={form.cover}
-                onChange={(e) => setForm({ ...form, cover: e.target.value })}
-                placeholder="https://images... (optional, fallback generated if empty)"
-              />
-            </div>
-
-            <div className="form-field full-width">
-              <label>Short Synopsis / Summary</label>
-              <textarea
-                rows={3}
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                placeholder="A gentle overview of this book's world..."
-              />
-            </div>
-
-            <div className="form-field">
-              <label>Your Rating</label>
-              <select
-                value={form.rating}
-                onChange={(e) => setForm({ ...form, rating: Number(e.target.value) })}
-              >
-                <option value="0">Not rated yet</option>
-                <option value="1">★☆☆☆☆ (1 star)</option>
-                <option value="2">★★☆☆☆ (2 stars)</option>
-                <option value="3">★★★☆☆ (3 stars)</option>
-                <option value="4">★★★★☆ (4 stars)</option>
-                <option value="5">★★★★★ (5 stars - Loved it)</option>
-              </select>
-            </div>
-
-            <div className="form-field">
-              <label>Spine Cloth Color</label>
-              <div className="spine-color-swatches">
-                {BOOK_SPINE_PALETTES.map((p) => (
-                  <button
-                    key={p.name}
-                    type="button"
-                    className={`swatch-circle ${form.spineColor === p.bg ? "active" : ""}`}
-                    style={{ backgroundColor: p.bg }}
-                    onClick={() => setForm({ ...form, spineColor: p.bg })}
-                    title={p.name}
-                  />
-                ))}
+            {/* Live Spine Preview Sidebar */}
+            <div className="spine-live-preview-box">
+              <span className="preview-label">Live Spine Preview</span>
+              <div className="preview-spine-stage">
+                <BookSpine
+                  book={form}
+                  thickness={previewThickness}
+                  height={220}
+                  orientation="vertical"
+                />
               </div>
+              <small className="thickness-indicator">
+                {form.pages || 280} pages → {previewThickness}px thickness
+              </small>
             </div>
 
-            <div className="form-field full-width">
-              <label>Personal Reading Notes / Reflections</label>
-              <textarea
-                rows={2}
-                value={form.notes}
-                onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                placeholder="Quotes, memorable scenes, reading thoughts..."
-              />
+            <div className="manual-inputs-fields">
+              <div className="form-field">
+                <label>Book Title *</label>
+                <input
+                  type="text"
+                  required
+                  value={form.title}
+                  onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  placeholder="Title of the story or scripture"
+                />
+              </div>
+
+              <div className="form-field">
+                <label>Author / Sage</label>
+                <input
+                  type="text"
+                  value={form.author}
+                  onChange={(e) => setForm({ ...form, author: e.target.value })}
+                  placeholder="Author, translator or teacher"
+                />
+              </div>
+
+              <div className="form-field">
+                <label>Number of Pages (Determines Spine Thickness) *</label>
+                <input
+                  type="number"
+                  min="50"
+                  max="3500"
+                  required
+                  value={form.pages}
+                  onChange={(e) => setForm({ ...form, pages: e.target.value })}
+                  placeholder="e.g. 350"
+                />
+              </div>
+
+              <div className="form-field">
+                <label>Edition Format</label>
+                <select
+                  value={form.format}
+                  onChange={(e) => setForm({ ...form, format: e.target.value })}
+                >
+                  <option value="Hardcover">Hardcover Edition</option>
+                  <option value="Paperback">Paperback Edition</option>
+                  <option value="Leatherbound">Deluxe Leatherbound</option>
+                </select>
+              </div>
+
+              <div className="form-field">
+                <label>Genre / Sacred Tradition</label>
+                <input
+                  type="text"
+                  list="world-genres-datalist"
+                  value={form.genre}
+                  onChange={(e) => setForm({ ...form, genre: e.target.value })}
+                  placeholder="e.g. Spirituality & Inner Peace, Vedanta, World Classics"
+                />
+                <datalist id="world-genres-datalist">
+                  {COMPREHENSIVE_GENRES_LIST.map((g) => (
+                    <option key={g} value={g} />
+                  ))}
+                </datalist>
+              </div>
+
+              <div className="form-field">
+                <label>Reading Status *</label>
+                <select
+                  value={form.status}
+                  onChange={(e) => setForm({ ...form, status: e.target.value })}
+                  className="status-dropdown"
+                >
+                  <option value="want">Want to Read (Goes to 3-Shelf Bookshelf)</option>
+                  <option value="currently">Currently Reading (Ribbon on Bookshelf)</option>
+                  <option value="read">Already Read (Goes to Top of 3D Stack)</option>
+                </select>
+              </div>
+
+              <div className="form-field">
+                <label>Publisher</label>
+                <input
+                  type="text"
+                  value={form.publisher}
+                  onChange={(e) => setForm({ ...form, publisher: e.target.value })}
+                  placeholder="e.g. Penguin Classics, Gita Press, HarperCollins"
+                />
+              </div>
+
+              <div className="form-field">
+                <label>Publication Year</label>
+                <input
+                  type="text"
+                  value={form.year}
+                  onChange={(e) => setForm({ ...form, year: e.target.value })}
+                  placeholder="e.g. 1992"
+                />
+              </div>
+
+              <div className="form-field full-width">
+                <label>Cover Image URL (Direct Link)</label>
+                <input
+                  type="url"
+                  value={form.cover}
+                  onChange={(e) => setForm({ ...form, cover: e.target.value })}
+                  placeholder="https://..."
+                />
+              </div>
+
+              <div className="form-field full-width">
+                <label>Spine Cloth Color</label>
+                <div className="spine-color-swatches">
+                  {BOOK_SPINE_PALETTES.map((p) => (
+                    <button
+                      key={p.name}
+                      type="button"
+                      className={`swatch-circle ${form.spineColor === p.bg ? "active" : ""}`}
+                      style={{ backgroundColor: p.bg }}
+                      onClick={() => setForm({ ...form, spineColor: p.bg })}
+                      title={p.name}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="form-field full-width">
+                <label>Short Synopsis / Teachings Summary</label>
+                <textarea
+                  rows={2}
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  placeholder="A gentle overview of this book's teachings or world..."
+                />
+              </div>
             </div>
 
             <div className="form-modal-footer">

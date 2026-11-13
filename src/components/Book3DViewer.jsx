@@ -16,11 +16,13 @@ import { getBookThematicDetails, BookThematicIcon } from "../utils/bookThematics
  * - 360-degree interactive rotation (drag or auto-turntable)
  */
 export default function Book3DViewer({ book }) {
-  const [rotY, setRotY] = useState(-25);
+  const [rotY, setRotY] = useState(-26);
   const [rotX, setRotX] = useState(8);
   const [isAutoRotating, setIsAutoRotating] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
   const isDragging = useRef(false);
   const lastMousePos = useRef({ x: 0, y: 0 });
+  const stageRef = useRef(null);
 
   const thickness = calculateSpineThickness(book.pages, false);
   const bookWidth = 190;
@@ -51,85 +53,64 @@ export default function Book3DViewer({ book }) {
     };
   };
 
+  // Cursor Alignment Rotation: Book dynamically rotates and tilts to align with the cursor!
   const handlePointerMove = (e) => {
-    if (!isDragging.current) return;
+    if (isDragging.current) {
+      const clientX = e.clientX || e.touches?.[0]?.clientX || 0;
+      const clientY = e.clientY || e.touches?.[0]?.clientY || 0;
+
+      const deltaX = clientX - lastMousePos.current.x;
+      const deltaY = clientY - lastMousePos.current.y;
+
+      lastMousePos.current = { x: clientX, y: clientY };
+
+      setRotY((prev) => (prev + deltaX * 0.7) % 360);
+      setRotX((prev) => Math.max(-35, Math.min(35, prev - deltaY * 0.4)));
+      return;
+    }
+
+    if (!stageRef.current) return;
+    const rect = stageRef.current.getBoundingClientRect();
     const clientX = e.clientX || e.touches?.[0]?.clientX || 0;
     const clientY = e.clientY || e.touches?.[0]?.clientY || 0;
 
-    const deltaX = clientX - lastMousePos.current.x;
-    const deltaY = clientY - lastMousePos.current.y;
+    // Normalised position from center (-1 to +1)
+    const normX = Math.max(-1, Math.min(1, ((clientX - (rect.left + rect.width / 2)) / (rect.width / 2))));
+    const normY = Math.max(-1, Math.min(1, ((clientY - (rect.top + rect.height / 2)) / (rect.height / 2))));
 
-    lastMousePos.current = { x: clientX, y: clientY };
+    // Yaw (Y) rotates with cursor horizontally (-75deg to +75deg)
+    // Pitch (X) tilts with cursor vertically (-25deg to +25deg)
+    const targetY = Math.round(normX * 75);
+    const targetX = Math.round(-normY * 25);
 
-    setRotY((prev) => (prev + deltaX * 0.7) % 360);
-    setRotX((prev) => Math.max(-30, Math.min(30, prev - deltaY * 0.4)));
+    setRotY(targetY);
+    setRotX(targetX);
+  };
+
+  const handlePointerEnter = () => {
+    setIsHovering(true);
+    setIsAutoRotating(false);
+  };
+
+  const handlePointerLeave = () => {
+    setIsHovering(false);
+    isDragging.current = false;
+    // Smoothly ease back to aesthetic resting 3/4 angle
+    setRotY(-26);
+    setRotX(8);
   };
 
   const handlePointerUp = () => {
     isDragging.current = false;
   };
 
-  // Preset Angle Selectors
-  const setPresetAngle = (preset) => {
-    setIsAutoRotating(false);
-    if (preset === "front") {
-      setRotY(0);
-      setRotX(0);
-    } else if (preset === "perspective") {
-      setRotY(-32);
-      setRotX(10);
-    } else if (preset === "spine") {
-      setRotY(-90);
-      setRotX(0);
-    } else if (preset === "fore-edge") {
-      setRotY(90);
-      setRotX(0);
-    } else if (preset === "back") {
-      setRotY(-180);
-      setRotX(0);
-    }
-  };
-
   return (
     <div className="book-3d-viewer-wrapper">
-      {/* Top Controls Bar */}
+      {/* Top Controls Bar - Photo 4 preset options removed, replaced with clean cursor rotation guidance */}
       <div className="viewer-controls-bar">
-        <div className="preset-buttons-group">
-          <button
-            type="button"
-            className={`preset-btn ${rotY === 0 ? "active" : ""}`}
-            onClick={() => setPresetAngle("front")}
-          >
-            Front
-          </button>
-          <button
-            type="button"
-            className={`preset-btn ${rotY === -32 ? "active" : ""}`}
-            onClick={() => setPresetAngle("perspective")}
-          >
-            3/4 View
-          </button>
-          <button
-            type="button"
-            className={`preset-btn ${rotY === -90 ? "active" : ""}`}
-            onClick={() => setPresetAngle("spine")}
-          >
-            Spine
-          </button>
-          <button
-            type="button"
-            className={`preset-btn ${rotY === 90 ? "active" : ""}`}
-            onClick={() => setPresetAngle("fore-edge")}
-          >
-            Pages
-          </button>
-          <button
-            type="button"
-            className={`preset-btn ${Math.abs(rotY) === 180 ? "active" : ""}`}
-            onClick={() => setPresetAngle("back")}
-          >
-            Back
-          </button>
+        <div className="viewer-cursor-hint">
+          <Compass size={13} className="spin-subtle-icon" />
+          <span>Move cursor across book to rotate in 3D</span>
         </div>
 
         <button
@@ -144,11 +125,13 @@ export default function Book3DViewer({ book }) {
 
       {/* 3D Viewport Stage */}
       <div
+        ref={stageRef}
         className="viewer-stage"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
-        onPointerLeave={handlePointerUp}
+        onPointerEnter={handlePointerEnter}
+        onPointerLeave={handlePointerLeave}
         onTouchStart={handlePointerDown}
         onTouchMove={handlePointerMove}
         onTouchEnd={handlePointerUp}
@@ -159,6 +142,7 @@ export default function Book3DViewer({ book }) {
             width: `${bookWidth}px`,
             height: `${bookHeight}px`,
             transform: `rotateX(${rotX}deg) rotateY(${rotY}deg)`,
+            transition: isDragging.current ? "none" : "transform 0.12s cubic-bezier(0.2, 0, 0.2, 1)",
             "--model-thickness": `${bookDepth}px`,
             "--spine-color": spineColor,
             "--text-color": textColor,

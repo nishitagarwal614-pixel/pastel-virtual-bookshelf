@@ -247,21 +247,6 @@ export default function FrontCoverBookshelf({
                   </div>
                 </button>
 
-                <button
-                  type="button"
-                  className="popover-item"
-                  onClick={() => {
-                    onToggleViewMode("spine");
-                    setShowLayerMenu(false);
-                  }}
-                >
-                  <div className="item-icon-wrap">📚</div>
-                  <div className="item-text">
-                    <span className="item-heading">3D Spines &amp; Stack</span>
-                    <span className="item-desc">Wooden bookcase with spines &amp; stack</span>
-                  </div>
-                </button>
-
                 <div className="popover-divider" />
 
                 <button

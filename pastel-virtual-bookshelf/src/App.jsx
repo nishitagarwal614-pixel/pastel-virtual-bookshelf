@@ -13,7 +13,9 @@ import {
   Heart,
   X,
   Compass,
-  ChevronDown
+  ChevronDown,
+  Moon,
+  Sun
 } from "lucide-react";
 
 import { ALL_THEMES, REGULAR_THEMES, FESTIVE_THEMES, AVATAR_OPTIONS, LITERARY_QUOTES } from "./constants";
@@ -26,15 +28,20 @@ import {
 } from "./storage";
 
 import Onboarding from "./components/Onboarding";
-import VirtualBookshelf from "./components/VirtualBookshelf";
-import BookStack from "./components/BookStack";
-import BookDetailModal from "./components/BookDetailModal";
+import WoodenBookshelf from "./components/WoodenBookshelf";
+import CompletedBookStack from "./components/CompletedBookStack";
+import BookDetails from "./components/BookDetails";
 import AddBookModal from "./components/AddBookModal";
 import ThemeModal from "./components/ThemeModal";
 import ReadingJournal from "./components/ReadingJournal";
 import ReadingStats from "./components/ReadingStats";
+import { SCREENSHOT_REFERENCE_BOOKS } from "./data/screenshotBooks";
 import ProfileModal from "./components/ProfileModal";
 import SeasonalBanner from "./components/SeasonalBanner";
+import FestivalParticleCanvas from "./components/festivals/FestivalParticleCanvas";
+import FestivalSelector from "./components/festivals/FestivalSelector";
+import FestivalHub from "./components/festivals/FestivalHub";
+import { getFestivalThemeById } from "./data/festivalData";
 
 export default function App() {
   // Active User & All Users state
@@ -50,6 +57,7 @@ export default function App() {
   const [editingBook, setEditingBook] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showThemeModal, setShowThemeModal] = useState(false);
+  const [themeModalTab, setThemeModalTab] = useState("regular"); // 'regular' (Daily) | 'festive' (Seasonal)
   const [showProfileModal, setShowProfileModal] = useState(false);
 
   // Quick in-library search
@@ -65,13 +73,41 @@ export default function App() {
 
   // Apply CSS theme variables to root document
   const activeThemeId = currentUser?.theme || "sage-cream";
+  const isFestiveActive = activeThemeId.startsWith("festive-");
+
+  // Track everyday daily theme separately
+  const dailyThemeId = currentUser?.dailyTheme || (isFestiveActive ? "sage-cream" : activeThemeId);
+  const dailyThemeObj = useMemo(() => {
+    return REGULAR_THEMES.find((t) => t.id === dailyThemeId) || REGULAR_THEMES[0];
+  }, [dailyThemeId]);
+
   const currentThemeObj = useMemo(() => {
     return ALL_THEMES.find((t) => t.id === activeThemeId) || REGULAR_THEMES[0];
   }, [activeThemeId]);
 
+  const currentFestival = useMemo(() => {
+    return getFestivalThemeById(activeThemeId);
+  }, [activeThemeId]);
+
+  const isDarkTheme = useMemo(() => {
+    return Boolean(
+      currentThemeObj?.isDark ||
+      activeThemeId === "midnight-dark" ||
+      activeThemeId === "velvet-noir"
+    );
+  }, [currentThemeObj, activeThemeId]);
+
   useEffect(() => {
     const root = document.documentElement;
     const colors = currentThemeObj.colors;
+
+    if (isDarkTheme) {
+      root.classList.add("dark-mode");
+      document.body.classList.add("dark-mode");
+    } else {
+      root.classList.remove("dark-mode");
+      document.body.classList.remove("dark-mode");
+    }
 
     root.style.setProperty("--color-primary", colors.primary);
     root.style.setProperty("--color-primary-hover", colors.primaryHover);
@@ -88,9 +124,16 @@ export default function App() {
     root.style.setProperty("--shelf-plank-bg", colors.shelfPlank);
     root.style.setProperty("--shelf-trim-color", colors.shelfTrim);
 
+    if (currentFestival?.colors?.glowColor) {
+      root.style.setProperty("--festival-glow", currentFestival.colors.glowColor);
+    }
+    if (currentFestival?.colors?.haloGrad) {
+      root.style.setProperty("--festival-halo", currentFestival.colors.haloGrad);
+    }
+
     document.body.style.backgroundColor = colors.bgMain;
     document.body.style.color = colors.textBody;
-  }, [currentThemeObj]);
+  }, [currentThemeObj, currentFestival, isDarkTheme]);
 
   // Handlers for Onboarding & Profile Management
   const handleOnboardingComplete = (newUser) => {
@@ -124,13 +167,47 @@ export default function App() {
     }
   };
 
-  // Theme Handlers
+  // Theme Handlers: Separate Daily Themes vs Festive Themes & Dark Mode
   const handleSelectTheme = (themeId) => {
     if (!currentUser) return;
+    const isFestive = themeId.startsWith("festive-");
+    const chosenTheme = ALL_THEMES.find((t) => t.id === themeId);
+    const isDark = Boolean(chosenTheme?.isDark || themeId === "midnight-dark" || themeId === "velvet-noir");
+
     setCurrentUser((prev) => ({
       ...prev,
-      theme: themeId
+      theme: themeId,
+      dailyTheme: !isFestive ? themeId : prev.dailyTheme || "sage-cream",
+      lastLightTheme: !isDark && !isFestive ? themeId : prev.lastLightTheme || "sage-cream",
+      lastDarkTheme: isDark && !isFestive ? themeId : prev.lastDarkTheme || "midnight-dark"
     }));
+  };
+
+  const handleToggleDarkMode = () => {
+    if (!currentUser) return;
+    if (isDarkTheme) {
+      const targetLight = currentUser.lastLightTheme || "sage-cream";
+      handleSelectTheme(targetLight);
+    } else {
+      const targetDark = currentUser.lastDarkTheme || "midnight-dark";
+      handleSelectTheme(targetDark);
+    }
+  };
+
+  const handleReturnToDailyTheme = () => {
+    if (!currentUser) return;
+    const targetDaily = currentUser.dailyTheme || "sage-cream";
+    handleSelectTheme(targetDaily);
+  };
+
+  const handleOpenDailyThemesModal = () => {
+    setThemeModalTab("regular");
+    setShowThemeModal(true);
+  };
+
+  const handleOpenFestivalsModal = () => {
+    setThemeModalTab("festive");
+    setShowThemeModal(true);
   };
 
   const handleToggleFestiveAnimation = () => {
@@ -163,6 +240,23 @@ export default function App() {
     if (selectedBook && selectedBook.id === book.id) {
       setSelectedBook(book);
     }
+  };
+
+  const handleAddQuickBook = (bookData) => {
+    const newBook = {
+      id: `book_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      title: bookData.title || "Untitled Book",
+      author: bookData.author || "Unknown Author",
+      genre: bookData.genre || "Fiction",
+      pages: Number(bookData.pages) || 280,
+      coverColor: bookData.coverColor || "#6a7b67",
+      coverImage: bookData.coverImage || "",
+      status: bookData.status || "want",
+      rating: bookData.rating || 5,
+      notes: bookData.notes || "",
+      created: new Date().toISOString()
+    };
+    handleSaveBook(newBook);
   };
 
   const handleUpdateBookStatus = (bookId, newStatus) => {
@@ -237,6 +331,18 @@ export default function App() {
     }
   };
 
+  const handleLoadReferenceBooks = () => {
+    if (!currentUser) return;
+    setCurrentUser((prev) => {
+      const updated = {
+        ...prev,
+        books: SCREENSHOT_REFERENCE_BOOKS
+      };
+      saveCurrentUser(updated);
+      return updated;
+    });
+  };
+
   // Journal Handlers
   const handleAddJournalEntry = (newEntry) => {
     if (!currentUser) return;
@@ -290,36 +396,16 @@ export default function App() {
       <SeasonalBanner
         currentThemeId={activeThemeId}
         onApplyTheme={handleSelectTheme}
+        onOpenFestivals={handleOpenFestivalsModal}
       />
 
-      {/* Floating Ambient Festive Sprinkles (if enabled and festive theme active) */}
-      {currentUser.festiveAnimationEnabled && activeThemeId.startsWith("festive-") && (
-        <div className="festive-ambient-curtain" aria-hidden="true">
-          {activeThemeId === "festive-christmas" && (
-            <div className="falling-snow">
-              <span className="snowflake s1">❄</span>
-              <span className="snowflake s2">❅</span>
-              <span className="snowflake s3">❄</span>
-              <span className="snowflake s4">❅</span>
-              <span className="snowflake s5">❄</span>
-            </div>
-          )}
-          {activeThemeId === "festive-diwali" && (
-            <div className="golden-sparkles">
-              <span className="sparkle-gem g1">✦</span>
-              <span className="sparkle-gem g2">✧</span>
-              <span className="sparkle-gem g3">✦</span>
-              <span className="sparkle-gem g4">✧</span>
-            </div>
-          )}
-          {activeThemeId === "festive-newyear" && (
-            <div className="golden-sparkles">
-              <span className="sparkle-gem g1">⭐</span>
-              <span className="sparkle-gem g2">✨</span>
-              <span className="sparkle-gem g3">✦</span>
-            </div>
-          )}
-        </div>
+      {/* 60 FPS Hardware-Accelerated Festival Particle System (ONLY active in Festive Themes) */}
+      {isFestiveActive && currentFestival && currentUser.festiveAnimationEnabled && (
+        <FestivalParticleCanvas
+          themeId={activeThemeId}
+          particleType={currentFestival.particleType}
+          enabled={currentUser.festiveAnimationEnabled}
+        />
       )}
 
       {/* Aesthetic Top Navigation Bar */}
@@ -355,17 +441,7 @@ export default function App() {
                 document.getElementById("virtual-bookshelf")?.scrollIntoView({ behavior: "smooth" });
               }}
             >
-              3D Bookshelf
-            </button>
-            <button
-              type="button"
-              className={`nav-tab-item ${activeTab === "stack" ? "active" : ""}`}
-              onClick={() => {
-                setActiveTab("stack");
-                document.getElementById("read-books-stack")?.scrollIntoView({ behavior: "smooth" });
-              }}
-            >
-              Read Stack
+              Bookshelf
             </button>
             <button
               type="button"
@@ -375,7 +451,7 @@ export default function App() {
                 document.getElementById("reading-journal")?.scrollIntoView({ behavior: "smooth" });
               }}
             >
-              Reading Journal
+              Journal
             </button>
             <button
               type="button"
@@ -396,7 +472,7 @@ export default function App() {
               <Search size={14} className="search-icon-subtle" />
               <input
                 type="text"
-                placeholder="Search my library..."
+                placeholder="Search..."
                 value={libraryQuery}
                 onChange={(e) => setLibraryQuery(e.target.value)}
               />
@@ -411,15 +487,39 @@ export default function App() {
               )}
             </div>
 
-            {/* Theme Customizer Trigger */}
+            {/* Seasonal Festival Option: ONLY shown when a festival is around the corner OR active */}
+            <FestivalSelector
+              currentThemeId={activeThemeId}
+              onSelectTheme={handleSelectTheme}
+              onReturnToDailyTheme={handleReturnToDailyTheme}
+              animationEnabled={currentUser.festiveAnimationEnabled}
+              onToggleAnimation={handleToggleFestiveAnimation}
+              onOpenFullModal={handleOpenFestivalsModal}
+            />
+
+            {/* Dedicated Daily Themes Customizer Button */}
             <button
               type="button"
-              className="theme-trigger-btn"
-              onClick={() => setShowThemeModal(true)}
-              title={`Theme: ${currentThemeObj.name}`}
+              className="theme-trigger-btn daily-theme-btn"
+              onClick={handleOpenDailyThemesModal}
+              title={`Theme: ${dailyThemeObj.name}. Tap to customize everyday palette.`}
             >
-              <Palette size={16} />
-              <span className="theme-name-label">{currentThemeObj.name}</span>
+              <Palette size={15} />
+              <span className="theme-name-label">
+                {dailyThemeObj.name}
+              </span>
+            </button>
+
+            {/* Quick 1-Click Dark Mode Toggle */}
+            <button
+              type="button"
+              className={`quick-dark-toggle-btn ${isDarkTheme ? "active-dark" : ""}`}
+              onClick={handleToggleDarkMode}
+              title={isDarkTheme ? "Switch to Light Theme" : "Switch to Dark Mode (Midnight Library)"}
+              aria-label={isDarkTheme ? "Switch to Light Theme" : "Switch to Dark Theme"}
+            >
+              {isDarkTheme ? <Sun size={14} /> : <Moon size={14} />}
+              <span className="dark-toggle-label">{isDarkTheme ? "Light" : "Dark"}</span>
             </button>
 
             {/* Add Book Button */}
@@ -511,32 +611,47 @@ export default function App() {
           </div>
         </section>
 
-        {/* SECTION A: My Virtual Bookshelf – To Be Read */}
-        {(activeTab === "all" || activeTab === "bookshelf") && (
-          <VirtualBookshelf
-            books={filteredBooks}
-            activeTheme={activeThemeId}
-            festiveAnimationEnabled={currentUser.festiveAnimationEnabled}
+        {/* Interactive Festival Hub: Greeting, Countdown, Reading Challenge, Gift Unwrap & Badges (Only rendered during Festive Mode) */}
+        {isFestiveActive && (
+          <FestivalHub
+            activeThemeId={activeThemeId}
+            userBooks={userBooks}
+            onAddBookToLibrary={handleAddQuickBook}
             onSelectBook={(book) => setSelectedBook(book)}
-            onOpenAdd={() => {
-              setEditingBook(null);
-              setShowAddModal(true);
-            }}
-            onMarkAsRead={handleMarkAsRead}
-            onDeleteBook={handleDeleteBook}
           />
         )}
 
-        {/* SECTION B: My Read Books Collection (The 3D Book Stack) */}
-        {(activeTab === "all" || activeTab === "stack") && (
-          <BookStack
-            books={filteredBooks}
-            onSelectBook={(book) => setSelectedBook(book)}
-            onOpenAdd={() => {
-              setEditingBook(null);
-              setShowAddModal(true);
-            }}
-          />
+        {/* MAIN VIRTUAL BOOKSHELF & RIGHT-SIDE COMPLETED READ STACK */}
+        {(activeTab === "all" || activeTab === "bookshelf" || activeTab === "stack") && (
+          <div className="bookshelf-with-sidebar-container">
+            {/* Left Main Area: Virtual Bookshelf */}
+            <div className="bookshelf-primary-area" id="virtual-bookshelf">
+              <WoodenBookshelf
+                books={filteredBooks}
+                activeTheme={activeThemeId}
+                festiveAnimationEnabled={currentUser.festiveAnimationEnabled}
+                onSelectBook={(book) => setSelectedBook(book)}
+                onOpenAdd={() => {
+                  setEditingBook(null);
+                  setShowAddModal(true);
+                }}
+                onMarkAsRead={handleMarkAsRead}
+                onLoadReferenceBooks={handleLoadReferenceBooks}
+              />
+            </div>
+
+            {/* Right Side: Realistic Stack of Completed Books (Matching Images 1 & 3) */}
+            <aside className="bookshelf-right-stack-sidebar" id="read-books-stack">
+              <CompletedBookStack
+                books={filteredBooks}
+                onSelectBook={(book) => setSelectedBook(book)}
+                onOpenAdd={() => {
+                  setEditingBook(null);
+                  setShowAddModal(true);
+                }}
+              />
+            </aside>
+          </div>
         )}
 
         {/* SECTION C: Reading Journal */}
@@ -589,7 +704,7 @@ export default function App() {
       {/* 1. Realistic 3D Hardcover Book Detail Modal */}
       <AnimatePresence>
         {selectedBook && (
-          <BookDetailModal
+          <BookDetails
             book={selectedBook}
             onClose={() => setSelectedBook(null)}
             onUpdateStatus={handleUpdateBookStatus}
@@ -624,6 +739,7 @@ export default function App() {
       <AnimatePresence>
         {showThemeModal && (
           <ThemeModal
+            initialTab={themeModalTab}
             currentThemeId={activeThemeId}
             onSelectTheme={handleSelectTheme}
             festiveAnimationEnabled={currentUser.festiveAnimationEnabled}

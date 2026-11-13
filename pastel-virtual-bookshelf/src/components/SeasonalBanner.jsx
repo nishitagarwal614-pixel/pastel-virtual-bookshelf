@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { Sparkles, X, ArrowRight } from "lucide-react";
+import { Sparkles, X, ArrowRight, Wand2 } from "lucide-react";
 import { getSeasonalThemeSuggestion } from "../constants";
 
-export default function SeasonalBanner({ currentThemeId, onApplyTheme }) {
+export default function SeasonalBanner({ currentThemeId, onApplyTheme, onOpenFestivals }) {
   const [dismissed, setDismissed] = useState(false);
   const suggestion = getSeasonalThemeSuggestion();
 
@@ -13,9 +13,9 @@ export default function SeasonalBanner({ currentThemeId, onApplyTheme }) {
   return (
     <div className="seasonal-suggestion-banner">
       <div className="banner-content">
-        <span className="banner-sparkle">✨</span>
+        <span className="banner-sparkle">{suggestion.icon || "✨"}</span>
         <div className="banner-text">
-          <strong>Seasonal Atmosphere: {suggestion.name}</strong>
+          <strong>Festival Around the Corner: {suggestion.name}</strong>
           <span> — {suggestion.reason}</span>
         </div>
       </div>
@@ -24,14 +24,15 @@ export default function SeasonalBanner({ currentThemeId, onApplyTheme }) {
           type="button"
           className="banner-apply-btn"
           onClick={() => onApplyTheme(suggestion.themeId)}
+          title={`Activate ${suggestion.name} Festival Atmosphere`}
         >
-          Try {suggestion.name} <ArrowRight size={13} />
+          Celebrate {suggestion.name} {suggestion.icon} <ArrowRight size={13} />
         </button>
         <button
           type="button"
           className="banner-dismiss-btn"
           onClick={() => setDismissed(true)}
-          title="Dismiss suggestion"
+          title="Dismiss seasonal banner"
         >
           <X size={14} />
         </button>

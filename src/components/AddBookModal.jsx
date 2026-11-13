@@ -1,8 +1,13 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { X, Search, Plus, Check, BookOpen, AlertCircle, Sparkles, Layers } from "lucide-react";
-import { searchBooksApi } from "../api";
-import { BOOK_SPINE_PALETTES } from "../constants";
+import { X, Search, Plus, Check, BookOpen, AlertCircle, Sparkles, Layers, Globe } from "lucide-react";
+import { searchBooksApi, POPULAR_AND_TRENDING_BOOKS } from "../api";
+import {
+  BOOK_SPINE_PALETTES,
+  SUPPORTED_LANGUAGES,
+  POPULAR_GENRES,
+  COMPREHENSIVE_GENRES_LIST
+} from "../constants";
 import BookSpine from "./BookSpine";
 import { calculateSpineThickness } from "../utils/bookDimensions";
 
@@ -14,7 +19,9 @@ export default function AddBookModal({
 }) {
   const [mode, setMode] = useState(initialBook ? "manual" : "search"); // 'search' | 'manual'
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchType, setSearchType] = useState("all"); // 'all' | 'title' | 'author'
+  const [searchType, setSearchType] = useState("all"); // 'all' | 'title' | 'author' | 'genre' | 'isbn'
+  const [selectedLanguage, setSelectedLanguage] = useState("all");
+  const [activeGenreChip, setActiveGenreChip] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
@@ -26,7 +33,7 @@ export default function AddBookModal({
     initialBook || {
       title: "",
       author: "",
-      genre: "Literature",
+      genre: "Spirituality & Inner Peace",
       year: new Date().getFullYear().toString(),
       pages: 280,
       format: "Hardcover",
@@ -43,15 +50,30 @@ export default function AddBookModal({
     }
   );
 
-  const handleSearch = async (e) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) return;
+  const handleSearch = async (
+    e,
+    overrideQuery = null,
+    overrideType = null,
+    overrideLang = null
+  ) => {
+    if (e) e.preventDefault();
+    const q = overrideQuery !== null ? overrideQuery : searchQuery;
+    const type = overrideType !== null ? overrideType : searchType;
+    const lang = overrideLang !== null ? overrideLang : selectedLanguage;
+
+    if (!q.trim() && lang === "all" && type === "all") {
+      setHasSearched(false);
+      setSearchResults([]);
+      return;
+    }
+
     setIsSearching(true);
     setHasSearched(true);
     setDuplicateWarning("");
     setSelectedBookForEditions(null);
+
     try {
-      const results = await searchBooksApi(searchQuery, searchType);
+      const results = await searchBooksApi(q, type, lang);
       setSearchResults(results);
     } catch {
       setSearchResults([]);
@@ -60,8 +82,30 @@ export default function AddBookModal({
     }
   };
 
+  const handleSelectGenreChip = (chip) => {
+    if (activeGenreChip === chip.id) {
+      // Toggle off
+      setActiveGenreChip(null);
+      setSearchQuery("");
+      setSearchType("all");
+      setSelectedLanguage("all");
+      setHasSearched(false);
+      setSearchResults([]);
+      return;
+    }
+
+    setActiveGenreChip(chip.id);
+    const targetQuery = chip.query || "";
+    const targetLang = chip.lang || "all";
+    const targetType = chip.subject ? "genre" : "all";
+
+    setSearchQuery(targetQuery);
+    setSelectedLanguage(targetLang);
+    setSearchType(targetType);
+    handleSearch(null, targetQuery, targetType, targetLang);
+  };
+
   const handleSelectSearchResult = (selectedBook) => {
-    // If the book has multiple editions, allow the user to select the edition
     if (selectedBook.editionsList && selectedBook.editionsList.length > 1) {
       setSelectedBookForEditions(selectedBook);
       return;
@@ -98,9 +142,10 @@ export default function AddBookModal({
       pages,
       format,
       publisher,
-      isbn: selectedBook.isbn,
-      cover: selectedBook.cover,
-      genre: selectedBook.genre,
+      isbn: selectedBook.isbn || "",
+      cover: selectedBook.cover || "",
+      genre: selectedBook.genre || "Spirituality & Wisdom",
+      description: selectedBook.description || prev.description || "",
       spineColor: selectedBook.spineColor || prev.spineColor
     }));
 
@@ -158,11 +203,11 @@ export default function AddBookModal({
 
         <div className="add-modal-header">
           <div className="aesthetic-badge">
-            <Sparkles size={13} /> {initialBook ? "EDIT STORY" : "ENRICH YOUR LIBRARY"}
+            <Sparkles size={13} /> {initialBook ? "EDIT STORY" : "UNIVERSAL WORLD BOOK ARCHIVE"}
           </div>
           <h2>{initialBook ? "Edit Book Details" : "Add a New Book"}</h2>
           <p className="modal-subtitle">
-            Search Open Library for verified editions, covers, and real page counts to model accurate book spines.
+            Explore 40M+ books across every genre—including Spirituality, Vedanta, Sacred Scriptures, Philosophy, World Classics, and literature in languages across the globe.
           </p>
         </div>
 
@@ -178,7 +223,7 @@ export default function AddBookModal({
                 setSelectedBookForEditions(null);
               }}
             >
-              <Search size={15} /> Search Book Database
+              <Search size={15} /> Global Book Search
             </button>
             <button
               type="button"
@@ -206,12 +251,40 @@ export default function AddBookModal({
             <form onSubmit={handleSearch} className="search-box-row">
               <select
                 value={searchType}
-                onChange={(e) => setSearchType(e.target.value)}
+                onChange={(e) => {
+                  const newType = e.target.value;
+                  setSearchType(newType);
+                  if (searchQuery.trim()) {
+                    handleSearch(null, null, newType, null);
+                  }
+                }}
                 className="search-type-select"
+                title="Search Filter Category"
               >
-                <option value="all">All Fields</option>
+                <option value="all">All Fields &amp; Topics</option>
                 <option value="title">By Title</option>
                 <option value="author">By Author</option>
+                <option value="genre">By Genre / Subject</option>
+                <option value="isbn">By ISBN / ID</option>
+              </select>
+
+              <select
+                value={selectedLanguage}
+                onChange={(e) => {
+                  const newLang = e.target.value;
+                  setSelectedLanguage(newLang);
+                  if (searchQuery.trim() || hasSearched) {
+                    handleSearch(null, null, null, newLang);
+                  }
+                }}
+                className="search-language-select"
+                title="Filter by world language"
+              >
+                {SUPPORTED_LANGUAGES.map((l) => (
+                  <option key={l.code} value={l.code}>
+                    {l.label}
+                  </option>
+                ))}
               </select>
 
               <div className="search-input-field">
@@ -219,11 +292,15 @@ export default function AddBookModal({
                 <input
                   type="text"
                   placeholder={
-                    searchType === "title"
-                      ? "Search by book title (e.g. The Secret History)..."
+                    searchType === "genre"
+                      ? "Search genres or topics (e.g. Spirituality, Vedanta, Zen, Sci-Fi)..."
+                      : searchType === "title"
+                      ? "Search book title (e.g. Bhagavad Gita, The Power of Now)..."
                       : searchType === "author"
-                      ? "Search by author name (e.g. Donna Tartt)..."
-                      : "Search by book title or author..."
+                      ? "Search author (e.g. Eckhart Tolle, Paramahansa Yogananda, Premchand)..."
+                      : selectedLanguage !== "all"
+                      ? "Search in selected language (titles, authors, scriptures)..."
+                      : "Search any book, spiritual text, author, or language..."
                   }
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -235,6 +312,20 @@ export default function AddBookModal({
                 {isSearching ? "Searching..." : "Search"}
               </button>
             </form>
+
+            {/* Quick Topic & Genre Filter Chips */}
+            <div className="search-genre-chips" title="Explore popular genres & traditions">
+              {POPULAR_GENRES.map((g) => (
+                <button
+                  key={g.id}
+                  type="button"
+                  className={`genre-filter-chip ${activeGenreChip === g.id ? "active" : ""}`}
+                  onClick={() => handleSelectGenreChip(g)}
+                >
+                  {g.label}
+                </button>
+              ))}
+            </div>
 
             {/* Edition Selection Drawer if triggered */}
             {selectedBookForEditions && (
@@ -258,7 +349,9 @@ export default function AddBookModal({
                     onClick={() => applySelectedBook(selectedBookForEditions)}
                   >
                     <strong>Primary Edition ({selectedBookForEditions.year || "Standard"})</strong>
-                    <small>{selectedBookForEditions.pages} pages • {selectedBookForEditions.format || "Hardcover"}</small>
+                    <small>
+                      {selectedBookForEditions.pages} pages • {selectedBookForEditions.format || "Hardcover"}
+                    </small>
                     <span className="publisher-tag">{selectedBookForEditions.publisher}</span>
                   </div>
                   {selectedBookForEditions.editionsList.map((ed, eIdx) => (
@@ -281,77 +374,187 @@ export default function AddBookModal({
               {isSearching ? (
                 <div className="search-loading-state">
                   <span className="spinner-sparkle">✦</span>
-                  <p>Searching Open Library archives for editions...</p>
+                  <p>Searching worldwide archives across genres &amp; languages...</p>
                 </div>
               ) : searchResults.length > 0 ? (
-                <div className="results-pinterest-grid">
-                  {searchResults.map((book) => {
-                    const isAlreadyAdded = existingBooks.some(
-                      (b) =>
-                        b.title.trim().toLowerCase() === book.title.trim().toLowerCase() ||
-                        (book.isbn && b.isbn && b.isbn === book.isbn)
-                    );
+                <>
+                  <div className="results-pinterest-grid">
+                    {searchResults.map((book) => {
+                      const isAlreadyAdded = existingBooks.some(
+                        (b) =>
+                          b.title.trim().toLowerCase() === book.title.trim().toLowerCase() ||
+                          (book.isbn && b.isbn && b.isbn === book.isbn)
+                      );
 
-                    return (
-                      <div
-                        key={book.openLibraryKey || book.title}
-                        className={`pinterest-book-card ${isAlreadyAdded ? "already-added" : ""}`}
-                      >
-                        <div className="card-cover-wrap">
-                          {book.cover ? (
-                            <img src={book.cover} alt={book.title} loading="lazy" />
-                          ) : (
-                            <div
-                              className="card-cover-fallback"
-                              style={{ backgroundColor: book.spineColor }}
-                            >
-                              <span>{book.title}</span>
-                            </div>
-                          )}
-                        </div>
-                        <div className="card-details">
-                          <h4 className="card-title" title={book.title}>
-                            {book.title}
-                          </h4>
-                          <p className="card-author">{book.author}</p>
-                          <div className="card-sub-info">
-                            {book.year && <span>{book.year}</span>}
-                            <span>• {book.pages}p</span>
+                      return (
+                        <div
+                          key={book.openLibraryKey || `${book.title}_${book.author}`}
+                          className={`pinterest-book-card ${isAlreadyAdded ? "already-added" : ""}`}
+                        >
+                          <div className="card-cover-wrap">
+                            {book.cover ? (
+                              <img src={book.cover} alt={book.title} loading="lazy" />
+                            ) : (
+                              <div
+                                className="card-cover-fallback"
+                                style={{ backgroundColor: book.spineColor || "#5a7356" }}
+                              >
+                                <span>{book.title}</span>
+                              </div>
+                            )}
                           </div>
+                          <div className="card-details">
+                            <h4 className="card-title" title={book.title}>
+                              {book.title}
+                            </h4>
+                            <p className="card-author">{book.author}</p>
+                            <div className="card-sub-info">
+                              {book.year && <span>{book.year}</span>}
+                              <span>• {book.pages}p</span>
+                            </div>
 
-                          {isAlreadyAdded ? (
-                            <span className="already-on-shelf-badge">Already on Shelf ✓</span>
-                          ) : (
-                            <button
-                              type="button"
-                              className="select-book-btn"
-                              onClick={() => handleSelectSearchResult(book)}
-                            >
-                              <Plus size={14} /> Select &amp; Review
-                            </button>
-                          )}
+                            {/* Genre & Language Badges */}
+                            <div className="card-badge-row">
+                              {book.genre && (
+                                <span className="card-genre-pill">
+                                  {book.genre.split(",")[0].trim()}
+                                </span>
+                              )}
+                              {book.languageLabel && (
+                                <span className="card-lang-pill">
+                                  {book.languageLabel.split("/")[0].trim()}
+                                </span>
+                              )}
+                            </div>
+
+                            {isAlreadyAdded ? (
+                              <span className="already-on-shelf-badge">Already on Shelf ✓</span>
+                            ) : (
+                              <button
+                                type="button"
+                                className="select-book-btn"
+                                onClick={() => handleSelectSearchResult(book)}
+                              >
+                                <Plus size={14} /> Select &amp; Review
+                              </button>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                  <div className="search-results-footer-hint">
+                    <span>Looking for a rare edition or private manuscript? </span>
+                    <button
+                      type="button"
+                      className="inline-manual-link"
+                      onClick={() => {
+                        const split = searchQuery.match(/^(.*?)\s+(?:by|of|from|written by)\s+(.*)$/i);
+                        if (split) {
+                          setForm((f) => ({ ...f, title: split[1].trim(), author: split[2].trim() }));
+                        } else {
+                          setForm((f) => ({ ...f, title: searchQuery.trim() }));
+                        }
+                        setMode("manual");
+                      }}
+                    >
+                      Add as custom book ✦
+                    </button>
+                  </div>
+                </>
               ) : hasSearched ? (
                 <div className="no-search-results">
-                  <p>No matching titles found in Open Library.</p>
+                  <p>No exact match found in online archives for &ldquo;{searchQuery}&rdquo;.</p>
                   <button
                     type="button"
                     className="switch-manual-link"
                     onClick={() => {
-                      setForm((f) => ({ ...f, title: searchQuery }));
+                      const split = searchQuery.match(/^(.*?)\s+(?:by|of|from|written by)\s+(.*)$/i);
+                      if (split) {
+                        setForm((f) => ({ ...f, title: split[1].trim(), author: split[2].trim() }));
+                      } else {
+                        setForm((f) => ({ ...f, title: searchQuery.trim() }));
+                      }
                       setMode("manual");
                     }}
                   >
-                    Click here to enter this book manually ✦
+                    Click here to add &ldquo;{searchQuery}&rdquo; as a custom book ✦
                   </button>
                 </div>
               ) : (
-                <div className="search-placeholder-prompt">
-                  <p>Type a book title or author above to browse editions with verified page counts and covers.</p>
+                /* Curated World Library & Spiritual Treasures Starter Collection */
+                <div className="curated-starter-section">
+                  <div className="curated-section-header">
+                    <h4>
+                      <Sparkles size={15} /> Curated World Library &amp; Spiritual Treasures
+                    </h4>
+                    <small>Click any book or select a genre above to browse</small>
+                  </div>
+
+                  <div className="results-pinterest-grid">
+                    {POPULAR_AND_TRENDING_BOOKS.map((book) => {
+                      const isAlreadyAdded = existingBooks.some(
+                        (b) =>
+                          b.title.trim().toLowerCase() === book.title.trim().toLowerCase() ||
+                          (book.isbn && b.isbn && b.isbn === book.isbn)
+                      );
+
+                      return (
+                        <div
+                          key={book.openLibraryKey || `${book.title}_${book.author}`}
+                          className={`pinterest-book-card ${isAlreadyAdded ? "already-added" : ""}`}
+                        >
+                          <div className="card-cover-wrap">
+                            {book.cover ? (
+                              <img src={book.cover} alt={book.title} loading="lazy" />
+                            ) : (
+                              <div
+                                className="card-cover-fallback"
+                                style={{ backgroundColor: book.spineColor || "#5a7356" }}
+                              >
+                                <span>{book.title}</span>
+                              </div>
+                            )}
+                          </div>
+                          <div className="card-details">
+                            <h4 className="card-title" title={book.title}>
+                              {book.title}
+                            </h4>
+                            <p className="card-author">{book.author}</p>
+                            <div className="card-sub-info">
+                              {book.year && <span>{book.year}</span>}
+                              <span>• {book.pages}p</span>
+                            </div>
+
+                            <div className="card-badge-row">
+                              {book.genre && (
+                                <span className="card-genre-pill">
+                                  {book.genre.split(",")[0].trim()}
+                                </span>
+                              )}
+                              {book.languageLabel && (
+                                <span className="card-lang-pill">
+                                  {book.languageLabel.split("/")[0].trim()}
+                                </span>
+                              )}
+                            </div>
+
+                            {isAlreadyAdded ? (
+                              <span className="already-on-shelf-badge">Already on Shelf ✓</span>
+                            ) : (
+                              <button
+                                type="button"
+                                className="select-book-btn"
+                                onClick={() => handleSelectSearchResult(book)}
+                              >
+                                <Plus size={14} /> Select &amp; Review
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
@@ -385,17 +588,17 @@ export default function AddBookModal({
                   required
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  placeholder="Title of the story"
+                  placeholder="Title of the story or scripture"
                 />
               </div>
 
               <div className="form-field">
-                <label>Author</label>
+                <label>Author / Sage</label>
                 <input
                   type="text"
                   value={form.author}
                   onChange={(e) => setForm({ ...form, author: e.target.value })}
-                  placeholder="Author name"
+                  placeholder="Author, translator or teacher"
                 />
               </div>
 
@@ -425,13 +628,19 @@ export default function AddBookModal({
               </div>
 
               <div className="form-field">
-                <label>Genre / Category</label>
+                <label>Genre / Sacred Tradition</label>
                 <input
                   type="text"
+                  list="world-genres-datalist"
                   value={form.genre}
                   onChange={(e) => setForm({ ...form, genre: e.target.value })}
-                  placeholder="e.g. Classic Literature, Gothic, Mystery"
+                  placeholder="e.g. Spirituality & Inner Peace, Vedanta, World Classics"
                 />
+                <datalist id="world-genres-datalist">
+                  {COMPREHENSIVE_GENRES_LIST.map((g) => (
+                    <option key={g} value={g} />
+                  ))}
+                </datalist>
               </div>
 
               <div className="form-field">
@@ -453,7 +662,7 @@ export default function AddBookModal({
                   type="text"
                   value={form.publisher}
                   onChange={(e) => setForm({ ...form, publisher: e.target.value })}
-                  placeholder="e.g. Penguin Classics"
+                  placeholder="e.g. Penguin Classics, Gita Press, HarperCollins"
                 />
               </div>
 
@@ -494,12 +703,12 @@ export default function AddBookModal({
               </div>
 
               <div className="form-field full-width">
-                <label>Short Synopsis / Summary</label>
+                <label>Short Synopsis / Teachings Summary</label>
                 <textarea
                   rows={2}
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  placeholder="A gentle overview of this book's world..."
+                  placeholder="A gentle overview of this book's teachings or world..."
                 />
               </div>
             </div>

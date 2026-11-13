@@ -1,17 +1,25 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { X, Sparkles, Palette, Check, RefreshCw, SunMedium, Flame, Moon, Gift } from "lucide-react";
-import { REGULAR_THEMES, FESTIVE_THEMES } from "../constants";
+import { REGULAR_THEMES, FESTIVE_THEMES, getSeasonalThemeSuggestion } from "../constants";
 
 export default function ThemeModal({
   currentThemeId,
+  initialTab = null,
   onSelectTheme,
   festiveAnimationEnabled,
   onToggleFestiveAnimation,
   onClose
 }) {
+  const seasonalSuggestion = getSeasonalThemeSuggestion();
+  const festiveThemesToShow = FESTIVE_THEMES.filter(
+    (t) =>
+      (seasonalSuggestion && t.id === seasonalSuggestion.themeId) ||
+      (currentThemeId.startsWith("festive-") && t.id === currentThemeId)
+  );
+
   const [activeTab, setActiveTab] = useState(
-    currentThemeId.startsWith("festive-") ? "festive" : "regular"
+    initialTab || (currentThemeId.startsWith("festive-") ? "festive" : "regular")
   );
   const [previewThemeId, setPreviewThemeId] = useState(currentThemeId);
 
@@ -56,8 +64,8 @@ export default function ThemeModal({
             onClick={() => setActiveTab("regular")}
           >
             <Palette size={15} />
-            <span>Aesthetic Colour Palettes</span>
-            <span className="cat-count">6</span>
+            <span>Daily Themes</span>
+            <span className="cat-count">{REGULAR_THEMES.length} (Light &amp; Dark)</span>
           </button>
           <button
             type="button"
@@ -65,8 +73,8 @@ export default function ThemeModal({
             onClick={() => setActiveTab("festive")}
           >
             <Sparkles size={15} />
-            <span>Festive Themes</span>
-            <span className="cat-badge-festive">Seasonal</span>
+            <span>Upcoming Festival</span>
+            <span className="cat-badge-festive">Around Corner</span>
           </button>
         </div>
 
@@ -102,6 +110,7 @@ export default function ThemeModal({
                   <div className="swatch-card-header">
                     <h4>{theme.name}</h4>
                     {isDefault && <span className="default-tag">Default</span>}
+                    {theme.isDark && <span className="dark-theme-pill">🌙 Dark</span>}
                     {isActive && (
                       <span className="active-tag">
                         <Check size={12} /> Active
@@ -140,10 +149,10 @@ export default function ThemeModal({
           </div>
         )}
 
-        {/* FESTIVE THEMES GRID */}
+        {/* FESTIVE THEMES: Strictly ONLY the festival around the corner */}
         {activeTab === "festive" && (
           <div className="festive-display-grid">
-            {FESTIVE_THEMES.map((theme) => {
+            {festiveThemesToShow.map((theme) => {
               const isActive = currentThemeId === theme.id;
 
               return (
