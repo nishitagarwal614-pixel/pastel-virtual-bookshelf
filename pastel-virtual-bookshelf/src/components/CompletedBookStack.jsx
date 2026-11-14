@@ -461,18 +461,6 @@ export default function CompletedBookStack({
       >
         tap one to read your note
       </button>
-
-      {/* Floating Purple Layers Button */}
-      <motion.button
-        type="button"
-        className="stack-floating-purple-btn"
-        whileHover={{ scale: 1.08 }}
-        whileTap={{ scale: 0.92 }}
-        onClick={onOpenLayers}
-        title="Bookshelf Layers"
-      >
-        <Layers size={22} color="#ffffff" strokeWidth={2.4} />
-      </motion.button>
     </section>
   );
 }

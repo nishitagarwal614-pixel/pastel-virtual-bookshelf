@@ -182,10 +182,7 @@ export default function AddBookModal({
       pages: Math.max(20, getOriginalBookPages(form.title, form.author, form.pages)),
       currentPage: form.currentPage || (form.status === "currently" ? 1 : null),
       rating: Number(form.rating) || 0,
-      completed:
-        form.status === "read" && !form.completed
-          ? new Date().toISOString().slice(0, 10)
-          : form.completed
+      completed: form.status === "read" ? (form.completed || "") : ""
     };
 
     onSaveBook(finalBook);
@@ -661,6 +658,20 @@ export default function AddBookModal({
                   <option value="read">Already Read (Goes to Top of 3D Stack)</option>
                 </select>
               </div>
+
+              {form.status === "read" && (
+                <div className="form-field full-width completed-date-form-field">
+                  <label>Date Completed (When did you finish reading this book?)</label>
+                  <input
+                    type="date"
+                    value={form.completed || ""}
+                    onChange={(e) => setForm({ ...form, completed: e.target.value })}
+                    max={new Date().toISOString().slice(0, 10)}
+                    className="completed-form-date-input"
+                  />
+                  <small className="field-hint">Select the date you finished this book, or leave blank to set later.</small>
+                </div>
+              )}
 
               <div className="form-field">
                 <label>Publisher</label>

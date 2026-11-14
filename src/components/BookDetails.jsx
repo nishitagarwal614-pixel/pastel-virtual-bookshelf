@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   X,
@@ -36,6 +36,8 @@ export default function BookDetails({
   onUpdateRating,
   onUpdateNotes,
   onUpdateBookmark,
+  onUpdateCompletedDate,
+  onUpdateShelfPosition,
   onEdit,
   onDelete
 }) {
@@ -52,6 +54,18 @@ export default function BookDetails({
   );
   const [isSavedBookmark, setIsSavedBookmark] = useState(false);
 
+  // Completion date tracking for completed books
+  const [completedDate, setCompletedDate] = useState(book.completed || "");
+  const [isSavedDate, setIsSavedDate] = useState(false);
+
+  useEffect(() => {
+    setCompletedDate(book.completed || "");
+    setUserNotes(book.notes || "");
+    setCurrentPage(
+      book.currentPage ? Math.min(originalPages, Math.max(1, Number(book.currentPage))) : 1
+    );
+  }, [book.id, book.completed, book.notes, book.currentPage, originalPages]);
+
   const handleStepPage = (delta) => {
     setCurrentPage((prev) => Math.min(originalPages, Math.max(1, prev + delta)));
   };
@@ -62,6 +76,23 @@ export default function BookDetails({
     }
     setIsSavedBookmark(true);
     setTimeout(() => setIsSavedBookmark(false), 2200);
+  };
+
+  const handleSaveCompletedDate = (overrideDate) => {
+    const val = overrideDate !== undefined ? overrideDate : completedDate;
+    if (onUpdateCompletedDate) {
+      onUpdateCompletedDate(book.id, val);
+    }
+    setIsSavedDate(true);
+    setTimeout(() => setIsSavedDate(false), 2200);
+  };
+
+  const handleStatusChange = (newStatus) => {
+    onUpdateStatus(book.id, newStatus);
+    if (newStatus === "read" && !book.completed && !completedDate) {
+      const today = new Date().toISOString().slice(0, 10);
+      setCompletedDate(today);
+    }
   };
 
   const handleNotesSave = (e) => {
@@ -106,8 +137,13 @@ export default function BookDetails({
               </span>
             </div>
 
-            {/* Interactive 3D Hardcover Physical Book */}
-            <Book3DViewer book={book} />
+            {/* Interactive 3D Hardcover Physical Book with Open Book & 3D Bookmark */}
+            <Book3DViewer
+              book={book}
+              currentPage={currentPage}
+              originalPages={originalPages}
+              onUpdateBookmark={onUpdateBookmark}
+            />
           </div>
 
           {/* Right Column: Bibliographic Details & Interactions */}
@@ -133,7 +169,7 @@ export default function BookDetails({
                     key={opt.id}
                     type="button"
                     className={`status-btn-pill ${book.status === opt.id ? "active" : ""}`}
-                    onClick={() => onUpdateStatus(book.id, opt.id)}
+                    onClick={() => handleStatusChange(opt.id)}
                   >
                     {opt.icon}
                     <span>{opt.label}</span>
@@ -141,6 +177,81 @@ export default function BookDetails({
                 ))}
               </div>
             </div>
+
+            {/* Bookshelf Placement Tier Selector */}
+            <div className="shelf-location-control-box">
+              <span className="control-label">Bookshelf Placement:</span>
+              <div className="shelf-select-row">
+                <Sliders size={13} className="shelf-select-icon" />
+                <select
+                  value={book.shelfPosition || 1}
+                  onChange={(e) =>
+                    onUpdateShelfPosition && onUpdateShelfPosition(book.id, Number(e.target.value))
+                  }
+                  className="shelf-position-select"
+                  title="Move this book to another wooden shelf tier"
+                >
+                  <option value={1}>Shelf 1 (Top Plank)</option>
+                  <option value={2}>Shelf 2</option>
+                  <option value={3}>Shelf 3</option>
+                  <option value={4}>Shelf 4 (Bottom Plank)</option>
+                  <option value={5}>Shelf 5 (+ New Wooden Row)</option>
+                  <option value={6}>Shelf 6 (+ New Wooden Row)</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Date Completed Prompt & Selector for Completed Books */}
+            {book.status === "read" && (
+              <motion.div
+                className="completed-reading-date-card"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25 }}
+              >
+                <div className="completed-card-header">
+                  <div className="completed-trophy-icon-wrap">
+                    <span className="completed-emoji-icon">🎉</span>
+                  </div>
+                  <div className="completed-header-text">
+                    <h4 className="completed-prompt-title">
+                      {book.completed ? "Book Completed!" : "When did you finish this book?"}
+                    </h4>
+                    <p className="completed-prompt-subtitle">
+                      {book.completed
+                        ? "Your completion date is recorded below. You can change it anytime:"
+                        : "Please enter your date of completion to accurately record it in your library:"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="completed-controls-grid">
+                  <div className="completed-input-wrap">
+                    <span className="completed-field-label">Date Completed:</span>
+                    <div className="completed-input-affix-wrap">
+                      <Calendar size={14} className="calendar-prefix-icon" />
+                      <input
+                        id="completion-date-input"
+                        type="date"
+                        value={completedDate}
+                        onChange={(e) => setCompletedDate(e.target.value)}
+                        className="completed-date-picker-input"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="completed-action-col">
+                    <button
+                      type="button"
+                      className={`save-completed-date-btn ${isSavedDate ? "saved" : ""}`}
+                      onClick={() => handleSaveCompletedDate()}
+                    >
+                      {isSavedDate ? "Date Saved! ✓" : (book.completed ? "Update Date" : "Save Completion Date")}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
 
             {/* Bookmark & Progress Section for Currently Reading Books */}
             {book.status === "currently" && (
@@ -326,10 +437,30 @@ export default function BookDetails({
                       <span className="fact-data">{book.started}</span>
                     </div>
                   )}
-                  {book.completed && (
-                    <div className="fact-cell">
+                  {book.status === "read" && (
+                    <div className="fact-cell fact-cell-date-completed">
                       <span className="fact-title">Date Completed</span>
-                      <span className="fact-data">{book.completed}</span>
+                      <div className="fact-date-val-row">
+                        {book.completed ? (
+                          <span className="fact-data">{book.completed}</span>
+                        ) : (
+                          <span className="fact-data-unspecified">Not set yet</span>
+                        )}
+                        <button
+                          type="button"
+                          className="edit-completed-date-btn"
+                          onClick={() => {
+                            const dateInput = document.getElementById("completion-date-input");
+                            if (dateInput) {
+                              dateInput.focus();
+                              dateInput.scrollIntoView({ behavior: "smooth", block: "center" });
+                            }
+                          }}
+                          title="Change completion date"
+                        >
+                          <Pencil size={11} /> {book.completed ? "Change" : "Enter Date"}
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>

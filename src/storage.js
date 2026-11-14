@@ -1,3 +1,5 @@
+import { USER_AUTHENTIC_COLLECTION } from "./data/screenshotBooks";
+
 const STORAGE_USERS_KEY = "between_pages_users_v2";
 const STORAGE_ACTIVE_USER_ID_KEY = "between_pages_active_user_v2";
 
@@ -43,7 +45,17 @@ export function getCurrentUser() {
   const activeId = getActiveUserId();
   if (!activeId) return null;
   const users = loadUsers();
-  return users[activeId] || null;
+  const user = users[activeId] || null;
+  if (user) {
+    const hasUnwantedRef =
+      user.books &&
+      user.books.some((b) => (b.id && b.id.startsWith("ref_")) || b.title === "The Poppy War");
+    if (!user.books || user.books.length === 0 || hasUnwantedRef) {
+      user.books = USER_AUTHENTIC_COLLECTION;
+      saveCurrentUser(user);
+    }
+  }
+  return user;
 }
 
 export function saveCurrentUser(updatedUser) {
@@ -66,7 +78,7 @@ export function createNewUserProfile({ name, avatar, readingLevel = "reader" }) 
     theme: "sage-cream", // Default theme as requested
     festiveAnimationEnabled: true,
     readingGoal: 15,
-    books: [], // STRICT: Zero default books! Only user-added books.
+    books: USER_AUTHENTIC_COLLECTION,
     journalEntries: [],
     createdAt: new Date().toISOString()
   };

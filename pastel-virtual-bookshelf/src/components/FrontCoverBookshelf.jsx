@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Layers,
   Plus,
   Sparkles,
   Eye,
@@ -18,7 +17,7 @@ import {
   ClassicalBustProp,
   VintageFigurineProp
 } from "./ShelfDecorations";
-import { SCREENSHOT_REFERENCE_BOOKS } from "../data/screenshotBooks";
+import { USER_AUTHENTIC_COLLECTION } from "../data/screenshotBooks";
 
 /**
  * FrontCoverBookshelf.jsx
@@ -32,22 +31,17 @@ import { SCREENSHOT_REFERENCE_BOOKS } from "../data/screenshotBooks";
  *   2. Shelf 2 Right: Glowing Himalayan amber salt crystal lamp
  *   3. Shelf 3 Left: Classical Roman/Greek museum sculpture bust
  *   4. Shelf 4 Right: Vintage collector figurine
- * - Floating circular purple layers button (matching the screenshot's bottom-right button)
  */
 export default function FrontCoverBookshelf({
   books = [],
   onSelectBook,
   onOpenAdd,
-  onMarkAsRead,
-  onToggleViewMode,
-  onLoadReferenceBooks
+  onMarkAsRead
 }) {
   const [showProps, setShowProps] = useState(true);
-  const [showLayerMenu, setShowLayerMenu] = useState(false);
 
-  // If user has no books yet, use the screenshot reference books so the shelf is instantly alive!
-  const effectiveBooks = books.length > 0 ? books : SCREENSHOT_REFERENCE_BOOKS;
-  const isUsingPreviewBooks = books.length === 0;
+  // If user has no books yet, use the authentic collection
+  const effectiveBooks = books.length > 0 ? books : USER_AUTHENTIC_COLLECTION;
 
   // Distribute books across 4 horizontal shelves
   const shelfCount = 4;
@@ -61,23 +55,6 @@ export default function FrontCoverBookshelf({
 
   return (
     <div className="front-cover-bookshelf-container">
-      {/* Banner if previewing reference books */}
-      {isUsingPreviewBooks && (
-        <div className="reference-preview-banner">
-          <div className="banner-left">
-            <Sparkles size={14} className="banner-sparkle" />
-            <span>Showing reference collection. Click to add these books permanently to your library:</span>
-          </div>
-          <button
-            type="button"
-            className="load-ref-action-btn"
-            onClick={onLoadReferenceBooks}
-          >
-            Save Reference Books to Library
-          </button>
-        </div>
-      )}
-
       {/* Main Wooden Shelving Unit */}
       <div className="front-cover-shelving-unit">
         {/* SHELF 1 (Top Shelf) */}
@@ -207,106 +184,6 @@ export default function FrontCoverBookshelf({
             <div className="plank-cast-shadow" />
           </div>
         </div>
-      </div>
-
-      {/* Floating Purple Layers Action Button (Exact match to screenshot bottom-right button) */}
-      <div className="screenshot-floating-layers-anchor">
-        <AnimatePresence>
-          {showLayerMenu && (
-            <motion.div
-              className="floating-layers-popover"
-              initial={{ opacity: 0, scale: 0.85, y: 15 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.85, y: 15 }}
-              transition={{ type: "spring", damping: 25, stiffness: 350 }}
-            >
-              <div className="popover-header">
-                <span className="popover-title">Shelf Display &amp; Layers</span>
-                <button
-                  type="button"
-                  className="popover-close-btn"
-                  onClick={() => setShowLayerMenu(false)}
-                >
-                  <X size={14} />
-                </button>
-              </div>
-
-              <div className="popover-actions-list">
-                <button
-                  type="button"
-                  className="popover-item active"
-                  onClick={() => {
-                    // Already in cover mode
-                    setShowLayerMenu(false);
-                  }}
-                >
-                  <div className="item-icon-wrap">🖼️</div>
-                  <div className="item-text">
-                    <span className="item-heading">Front Cover Display</span>
-                    <span className="item-desc">Matching your reference screenshot</span>
-                  </div>
-                </button>
-
-                <div className="popover-divider" />
-
-                <button
-                  type="button"
-                  className="popover-item"
-                  onClick={() => setShowProps(!showProps)}
-                >
-                  <div className="item-icon-wrap">🪴</div>
-                  <div className="item-text">
-                    <span className="item-heading">Shelf Decorations</span>
-                    <span className="item-desc">{showProps ? "Currently Visible (Click to hide)" : "Currently Hidden (Click to show)"}</span>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  className="popover-item"
-                  onClick={() => {
-                    onLoadReferenceBooks?.();
-                    setShowLayerMenu(false);
-                  }}
-                >
-                  <div className="item-icon-wrap">✨</div>
-                  <div className="item-text">
-                    <span className="item-heading">Load Screenshot Books</span>
-                    <span className="item-desc">Populate all 12 books from screenshot</span>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  className="popover-item"
-                  onClick={() => {
-                    onOpenAdd();
-                    setShowLayerMenu(false);
-                  }}
-                >
-                  <div className="item-icon-wrap">➕</div>
-                  <div className="item-text">
-                    <span className="item-heading">Add New Book</span>
-                    <span className="item-desc">Search and place on shelf</span>
-                  </div>
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Circular Floating Purple Button */}
-        <motion.button
-          type="button"
-          className="purple-circular-layers-btn"
-          whileHover={{ scale: 1.1, rotate: 6 }}
-          whileTap={{ scale: 0.92 }}
-          onClick={() => setShowLayerMenu(!showLayerMenu)}
-          title="Shelf Layers & Display Options"
-          aria-label="Shelf Layers & Display Options"
-        >
-          <Layers size={24} color="#ffffff" strokeWidth={2.2} />
-        </motion.button>
       </div>
     </div>
   );

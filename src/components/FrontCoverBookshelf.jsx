@@ -1,15 +1,15 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Layers,
   Plus,
   Sparkles,
   Eye,
   CheckCircle,
-  Image as ImageIcon,
-  RotateCcw,
   Sliders,
-  X
+  Search,
+  Compass,
+  Layers,
+  ChevronRight
 } from "lucide-react";
 import FrontCoverBook from "./FrontCoverBook";
 import {
@@ -18,7 +18,9 @@ import {
   ClassicalBustProp,
   VintageFigurineProp
 } from "./ShelfDecorations";
-import { SCREENSHOT_REFERENCE_BOOKS } from "../data/screenshotBooks";
+import { USER_AUTHENTIC_COLLECTION } from "../data/screenshotBooks";
+
+const MAX_BOOKS_PER_SHELF = 4;
 
 /**
  * FrontCoverBookshelf.jsx
@@ -27,286 +29,289 @@ import { SCREENSHOT_REFERENCE_BOOKS } from "../data/screenshotBooks";
  * - Deep midnight plum background wall (#191224)
  * - Multi-tier golden oak wooden shelf planks with top bevel highlights
  * - Front-facing books standing upright with real cover artwork & shadows
- * - Exact decorative shelf props:
- *   1. Shelf 1 Left: Vintage golden-framed puppy photo
- *   2. Shelf 2 Right: Glowing Himalayan amber salt crystal lamp
- *   3. Shelf 3 Left: Classical Roman/Greek museum sculpture bust
- *   4. Shelf 4 Right: Vintage collector figurine
- * - Floating circular purple layers button (matching the screenshot's bottom-right button)
+ * - Dynamic Shelf Allocation: Distributes books across all shelves up to capacity (4 books/shelf),
+ *   creating new shelves automatically when full.
+ * - Top Shelf Navigation Bar: Quick jump pills for each shelf, "+ Add Shelf" button,
+ *   and direct book selector that scrolls and spotlights exactly where each book is placed.
+ * - Exact decorative shelf props (Puppy photo, Salt lamp, Classical bust, Figurine).
  */
 export default function FrontCoverBookshelf({
   books = [],
   onSelectBook,
   onOpenAdd,
   onMarkAsRead,
-  onToggleViewMode,
-  onLoadReferenceBooks
+  onUpdateShelfPosition
 }) {
   const [showProps, setShowProps] = useState(true);
-  const [showLayerMenu, setShowLayerMenu] = useState(false);
+  const [additionalShelves, setAdditionalShelves] = useState(0);
+  const [highlightedBookId, setHighlightedBookId] = useState(null);
+  const [selectedBookJump, setSelectedBookJump] = useState("");
+  const [activeShelfHighlight, setActiveShelfHighlight] = useState(null);
 
-  // If user has no books yet, use the screenshot reference books so the shelf is instantly alive!
-  const effectiveBooks = books.length > 0 ? books : SCREENSHOT_REFERENCE_BOOKS;
-  const isUsingPreviewBooks = books.length === 0;
+  // If user has no books yet, use the authentic collection
+  const effectiveBooks = books.length > 0 ? books : USER_AUTHENTIC_COLLECTION;
 
-  // Distribute books across 4 horizontal shelves
-  const shelfCount = 4;
-  const shelfBooks = [[], [], [], []];
+  // Determine highest explicit shelf position
+  const maxExplicitShelf = effectiveBooks.reduce(
+    (max, b) => Math.max(max, Number(b.shelfPosition) || 1),
+    1
+  );
 
-  effectiveBooks.forEach((book, idx) => {
-    // If book has explicit shelfPosition, respect it; otherwise distribute evenly
-    const targetShelf = book.shelfPosition ? book.shelfPosition - 1 : idx % shelfCount;
-    shelfBooks[Math.min(shelfCount - 1, Math.max(0, targetShelf))].push(book);
+  // Minimum 4 shelves (matching authentic screenshot), expanding dynamically as books fill
+  const minShelvesNeeded = Math.max(
+    4,
+    maxExplicitShelf,
+    Math.ceil(effectiveBooks.length / MAX_BOOKS_PER_SHELF)
+  );
+  const totalShelvesCount = minShelvesNeeded + additionalShelves;
+
+  // Initialize shelf buckets
+  const shelfBuckets = Array.from({ length: totalShelvesCount }, () => []);
+
+  // Step 1: Place books that have an explicit shelfPosition
+  const unassignedBooks = [];
+  effectiveBooks.forEach((book) => {
+    if (book.shelfPosition && Number(book.shelfPosition) >= 1) {
+      const targetIdx = Number(book.shelfPosition) - 1;
+      while (shelfBuckets.length <= targetIdx) {
+        shelfBuckets.push([]);
+      }
+      shelfBuckets[targetIdx].push(book);
+    } else {
+      unassignedBooks.push(book);
+    }
   });
+
+  // Step 2: Distribute unassigned books to the first shelf that has space (< 4 books)
+  unassignedBooks.forEach((book) => {
+    let placed = false;
+    for (let i = 0; i < shelfBuckets.length; i++) {
+      if (shelfBuckets[i].length < MAX_BOOKS_PER_SHELF) {
+        shelfBuckets[i].push(book);
+        placed = true;
+        break;
+      }
+    }
+    // If all current shelves are full, spill into a new shelf tier
+    if (!placed) {
+      shelfBuckets.push([book]);
+    }
+  });
+
+  // Smooth scroll and highlight a shelf
+  const handleScrollToShelf = (shelfNum) => {
+    setActiveShelfHighlight(shelfNum);
+    const el = document.getElementById(`shelf-tier-${shelfNum}`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+    setTimeout(() => setActiveShelfHighlight(null), 2400);
+  };
+
+  // Direct Book Finder: Scroll and spotlight exactly where the book is placed
+  const handleJumpToBook = (bookId) => {
+    if (!bookId) return;
+    setSelectedBookJump(bookId);
+    setHighlightedBookId(bookId);
+
+    const bookEl = document.getElementById(`shelf-book-${bookId}`);
+    if (bookEl) {
+      bookEl.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    setTimeout(() => {
+      setHighlightedBookId(null);
+      setSelectedBookJump("");
+    }, 3200);
+  };
+
+  // Render authentic shelf props by tier
+  const renderPropForTier = (tierIndex) => {
+    if (!showProps) return null;
+    const tierNum = tierIndex + 1;
+
+    if (tierNum === 1) {
+      return (
+        <div className="shelf-prop-anchor anchor-left">
+          <FramedPhotoProp caption="Fluffy Companion in Gold Frame" />
+        </div>
+      );
+    }
+    if (tierNum === 2) {
+      return (
+        <div className="shelf-prop-anchor anchor-right">
+          <HimalayanSaltLampProp />
+        </div>
+      );
+    }
+    if (tierNum === 3) {
+      return (
+        <div className="shelf-prop-anchor anchor-left">
+          <ClassicalBustProp />
+        </div>
+      );
+    }
+    if (tierNum === 4) {
+      return (
+        <div className="shelf-prop-anchor anchor-right">
+          <VintageFigurineProp />
+        </div>
+      );
+    }
+    // Alternating subtle props for additional dynamic shelves (5+)
+    if (tierNum % 2 === 1) {
+      return (
+        <div className="shelf-prop-anchor anchor-left">
+          <FramedPhotoProp caption="Timeless Memories" />
+        </div>
+      );
+    }
+    return (
+      <div className="shelf-prop-anchor anchor-right">
+        <HimalayanSaltLampProp />
+      </div>
+    );
+  };
 
   return (
     <div className="front-cover-bookshelf-container">
-      {/* Banner if previewing reference books */}
-      {isUsingPreviewBooks && (
-        <div className="reference-preview-banner">
-          <div className="banner-left">
-            <Sparkles size={14} className="banner-sparkle" />
-            <span>Showing reference collection. Click to add these books permanently to your library:</span>
-          </div>
-          <button
-            type="button"
-            className="load-ref-action-btn"
-            onClick={onLoadReferenceBooks}
-          >
-            Save Reference Books to Library
-          </button>
-        </div>
-      )}
-
-      {/* Main Wooden Shelving Unit */}
-      <div className="front-cover-shelving-unit">
-        {/* SHELF 1 (Top Shelf) */}
-        <div className="front-shelf-tier" id="shelf-tier-1">
-          <div className="front-shelf-stage">
-            {/* Shelf 1 Left Prop: Framed Puppy Photo */}
-            {showProps && (
-              <div className="shelf-prop-anchor anchor-left">
-                <FramedPhotoProp caption="Fluffy Companion in Gold Frame" />
-              </div>
-            )}
-
-            {/* Shelf 1 Books */}
-            <div className="front-shelf-books-row">
-              {shelfBooks[0].map((book, idx) => (
-                <FrontCoverBook
-                  key={book.id || `s1_${idx}`}
-                  book={book}
-                  index={idx}
-                  onSelectBook={onSelectBook}
-                  onMarkAsRead={onMarkAsRead}
-                />
-              ))}
-            </div>
+      {/* ==============================================================
+          SHELF TOP NAVIGATION BAR: DIRECT JUMP & ROW MANAGEMENT
+          ============================================================== */}
+      <div className="shelf-top-navigation-bar">
+        <div className="shelf-nav-left">
+          <div className="shelf-nav-label-wrap">
+            <Sliders size={13} className="shelf-nav-icon" />
+            <span className="shelf-nav-label">Shelf Rows ({shelfBuckets.length}):</span>
           </div>
 
-          {/* Wooden Shelf Board */}
-          <div className="golden-oak-shelf-plank">
-            <div className="plank-highlight-edge" />
-            <div className="plank-wood-face" />
-            <div className="plank-cast-shadow" />
+          <div className="shelf-pills-scroll-track">
+            {shelfBuckets.map((bucket, sIdx) => {
+              const shelfNum = sIdx + 1;
+              const isFull = bucket.length >= MAX_BOOKS_PER_SHELF;
+              const isHighlighted = activeShelfHighlight === shelfNum;
+
+              return (
+                <button
+                  key={`nav_shelf_pill_${shelfNum}`}
+                  type="button"
+                  className={`shelf-nav-pill ${isHighlighted ? "active-highlight" : ""}`}
+                  onClick={() => handleScrollToShelf(shelfNum)}
+                  title={`Jump to Shelf ${shelfNum} (${bucket.length}/${MAX_BOOKS_PER_SHELF} books)`}
+                >
+                  <span className="pill-shelf-title">Shelf {shelfNum}</span>
+                  <span className={`pill-shelf-badge ${isFull ? "badge-full" : ""}`}>
+                    {bucket.length}/{MAX_BOOKS_PER_SHELF}
+                  </span>
+                </button>
+              );
+            })}
+
+            <button
+              type="button"
+              className="add-new-shelf-pill-btn"
+              onClick={() => {
+                setAdditionalShelves((prev) => prev + 1);
+                setTimeout(() => {
+                  handleScrollToShelf(shelfBuckets.length + 1);
+                }, 100);
+              }}
+              title="Add a new wooden shelf tier to your bookcase"
+            >
+              <Plus size={13} /> Add Shelf
+            </button>
           </div>
         </div>
 
-        {/* SHELF 2 */}
-        <div className="front-shelf-tier" id="shelf-tier-2">
-          <div className="front-shelf-stage">
-            {/* Shelf 2 Books */}
-            <div className="front-shelf-books-row">
-              {shelfBooks[1].map((book, idx) => (
-                <FrontCoverBook
-                  key={book.id || `s2_${idx}`}
-                  book={book}
-                  index={idx + 4}
-                  onSelectBook={onSelectBook}
-                  onMarkAsRead={onMarkAsRead}
-                />
-              ))}
-            </div>
-
-            {/* Shelf 2 Right Prop: Glowing Himalayan Salt Lamp */}
-            {showProps && (
-              <div className="shelf-prop-anchor anchor-right">
-                <HimalayanSaltLampProp />
-              </div>
-            )}
-          </div>
-
-          {/* Wooden Shelf Board */}
-          <div className="golden-oak-shelf-plank">
-            <div className="plank-highlight-edge" />
-            <div className="plank-wood-face" />
-            <div className="plank-cast-shadow" />
-          </div>
-        </div>
-
-        {/* SHELF 3 */}
-        <div className="front-shelf-tier" id="shelf-tier-3">
-          <div className="front-shelf-stage">
-            {/* Shelf 3 Left Prop: Classical Antiquities Bust */}
-            {showProps && (
-              <div className="shelf-prop-anchor anchor-left">
-                <ClassicalBustProp />
-              </div>
-            )}
-
-            {/* Shelf 3 Books */}
-            <div className="front-shelf-books-row">
-              {shelfBooks[2].map((book, idx) => (
-                <FrontCoverBook
-                  key={book.id || `s3_${idx}`}
-                  book={book}
-                  index={idx + 8}
-                  onSelectBook={onSelectBook}
-                  onMarkAsRead={onMarkAsRead}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Wooden Shelf Board */}
-          <div className="golden-oak-shelf-plank">
-            <div className="plank-highlight-edge" />
-            <div className="plank-wood-face" />
-            <div className="plank-cast-shadow" />
-          </div>
-        </div>
-
-        {/* SHELF 4 (Bottom Shelf) */}
-        <div className="front-shelf-tier" id="shelf-tier-4">
-          <div className="front-shelf-stage">
-            {/* Shelf 4 Books */}
-            <div className="front-shelf-books-row">
-              {shelfBooks[3].map((book, idx) => (
-                <FrontCoverBook
-                  key={book.id || `s4_${idx}`}
-                  book={book}
-                  index={idx + 12}
-                  onSelectBook={onSelectBook}
-                  onMarkAsRead={onMarkAsRead}
-                />
-              ))}
-            </div>
-
-            {/* Shelf 4 Right Prop: Vintage Figurine / Gentleman Bust */}
-            {showProps && (
-              <div className="shelf-prop-anchor anchor-right">
-                <VintageFigurineProp />
-              </div>
-            )}
-          </div>
-
-          {/* Wooden Shelf Board */}
-          <div className="golden-oak-shelf-plank">
-            <div className="plank-highlight-edge" />
-            <div className="plank-wood-face" />
-            <div className="plank-cast-shadow" />
+        {/* Right: Direct Book Finder Dropdown */}
+        <div className="shelf-nav-right">
+          <div className="direct-book-jumper-box">
+            <Search size={13} className="jumper-search-icon" />
+            <select
+              value={selectedBookJump}
+              onChange={(e) => handleJumpToBook(e.target.value)}
+              className="direct-book-select"
+              title="Select a book to jump directly to where it is placed on the shelf"
+            >
+              <option value="">✦ Find book on shelf...</option>
+              {shelfBuckets.flatMap((bucket, sIdx) =>
+                bucket.map((b) => (
+                  <option key={`jump_opt_${b.id}`} value={b.id}>
+                    Shelf {sIdx + 1}: {b.title} by {b.author || "Unknown"}
+                  </option>
+                ))
+              )}
+            </select>
           </div>
         </div>
       </div>
 
-      {/* Floating Purple Layers Action Button (Exact match to screenshot bottom-right button) */}
-      <div className="screenshot-floating-layers-anchor">
-        <AnimatePresence>
-          {showLayerMenu && (
-            <motion.div
-              className="floating-layers-popover"
-              initial={{ opacity: 0, scale: 0.85, y: 15 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.85, y: 15 }}
-              transition={{ type: "spring", damping: 25, stiffness: 350 }}
+      {/* ==============================================================
+          MAIN WOODEN SHELVING UNIT
+          ============================================================== */}
+      <div className="front-cover-shelving-unit">
+        {shelfBuckets.map((bucket, sIdx) => {
+          const shelfNum = sIdx + 1;
+          const isHighlighted = activeShelfHighlight === shelfNum;
+
+          return (
+            <div
+              key={`shelf_tier_${shelfNum}`}
+              className={`front-shelf-tier ${isHighlighted ? "tier-spotlight-active" : ""}`}
+              id={`shelf-tier-${shelfNum}`}
             >
-              <div className="popover-header">
-                <span className="popover-title">Shelf Display &amp; Layers</span>
-                <button
-                  type="button"
-                  className="popover-close-btn"
-                  onClick={() => setShowLayerMenu(false)}
-                >
-                  <X size={14} />
-                </button>
+              {/* Shelf Tier Header Strip */}
+              <div className="shelf-tier-info-header">
+                <span className="shelf-tier-title">
+                  ✦ Shelf {shelfNum}
+                </span>
+                <span className="shelf-tier-count">
+                  {bucket.length} of {MAX_BOOKS_PER_SHELF} books
+                </span>
               </div>
 
-              <div className="popover-actions-list">
-                <button
-                  type="button"
-                  className="popover-item active"
-                  onClick={() => {
-                    // Already in cover mode
-                    setShowLayerMenu(false);
-                  }}
-                >
-                  <div className="item-icon-wrap">🖼️</div>
-                  <div className="item-text">
-                    <span className="item-heading">Front Cover Display</span>
-                    <span className="item-desc">Matching your reference screenshot</span>
-                  </div>
-                </button>
+              {/* Books & Props Stage */}
+              <div className="front-shelf-stage">
+                {/* Prop on this tier */}
+                {renderPropForTier(sIdx)}
 
-                <div className="popover-divider" />
+                {/* Books Row */}
+                <div className="front-shelf-books-row">
+                  {bucket.map((book, bIdx) => (
+                    <FrontCoverBook
+                      key={book.id || `s${shelfNum}_${bIdx}`}
+                      book={book}
+                      index={sIdx * MAX_BOOKS_PER_SHELF + bIdx}
+                      onSelectBook={onSelectBook}
+                      onMarkAsRead={onMarkAsRead}
+                      isHighlighted={book.id === highlightedBookId}
+                    />
+                  ))}
 
-                <button
-                  type="button"
-                  className="popover-item"
-                  onClick={() => setShowProps(!showProps)}
-                >
-                  <div className="item-icon-wrap">🪴</div>
-                  <div className="item-text">
-                    <span className="item-heading">Shelf Decorations</span>
-                    <span className="item-desc">{showProps ? "Currently Visible (Click to hide)" : "Currently Hidden (Click to show)"}</span>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  className="popover-item"
-                  onClick={() => {
-                    onLoadReferenceBooks?.();
-                    setShowLayerMenu(false);
-                  }}
-                >
-                  <div className="item-icon-wrap">✨</div>
-                  <div className="item-text">
-                    <span className="item-heading">Load Screenshot Books</span>
-                    <span className="item-desc">Populate all 12 books from screenshot</span>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  className="popover-item"
-                  onClick={() => {
-                    onOpenAdd();
-                    setShowLayerMenu(false);
-                  }}
-                >
-                  <div className="item-icon-wrap">➕</div>
-                  <div className="item-text">
-                    <span className="item-heading">Add New Book</span>
-                    <span className="item-desc">Search and place on shelf</span>
-                  </div>
-                </button>
+                  {/* Empty Slot Placeholder if shelf has room */}
+                  {bucket.length < MAX_BOOKS_PER_SHELF && (
+                    <button
+                      type="button"
+                      className="empty-shelf-slot-btn"
+                      onClick={() => onOpenAdd && onOpenAdd(shelfNum)}
+                      title={`Add a new book directly to Shelf ${shelfNum}`}
+                    >
+                      <Plus size={16} />
+                      <span>Add to Shelf {shelfNum}</span>
+                    </button>
+                  )}
+                </div>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
-        {/* Circular Floating Purple Button */}
-        <motion.button
-          type="button"
-          className="purple-circular-layers-btn"
-          whileHover={{ scale: 1.1, rotate: 6 }}
-          whileTap={{ scale: 0.92 }}
-          onClick={() => setShowLayerMenu(!showLayerMenu)}
-          title="Shelf Layers & Display Options"
-          aria-label="Shelf Layers & Display Options"
-        >
-          <Layers size={24} color="#ffffff" strokeWidth={2.2} />
-        </motion.button>
+              {/* Wooden Shelf Board with Bevel & Cast Shadow */}
+              <div className="golden-oak-shelf-plank">
+                <div className="plank-highlight-edge" />
+                <div className="plank-wood-face" />
+                <div className="plank-cast-shadow" />
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

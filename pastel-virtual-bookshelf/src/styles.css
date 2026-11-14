@@ -285,6 +285,17 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   color: var(--color-text-head);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
+.nav-tab-item.nav-tab-overview-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 8px;
+  line-height: 1;
+}
+.nav-tab-item.nav-tab-overview-icon svg {
+  display: block;
+  stroke-width: 2.2;
+}
 
 .nav-actions-group {
   display: flex;
@@ -5704,6 +5715,235 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   color: #9ca3af !important;
 }
 
+/* Completed Book Date Card */
+.completed-reading-date-card {
+  margin: 14px 0 10px 0;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  border: 1.5px solid #86efac;
+  border-radius: 14px;
+  box-shadow: 0 4px 14px rgba(22, 163, 74, 0.1);
+  transition: all 0.2s ease;
+}
+
+.completed-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.completed-trophy-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #bbf7d0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.6);
+}
+
+.completed-header-text {
+  flex: 1;
+}
+
+.completed-prompt-title {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  font-weight: 700;
+  color: #15803d;
+  margin: 0 0 2px 0;
+}
+
+.completed-prompt-subtitle {
+  font-size: 11.5px;
+  color: #166534;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.completed-date-controls-grid {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.completed-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 220px;
+}
+
+.completed-field-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #15803d;
+  white-space: nowrap;
+}
+
+.completed-input-affix-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.calendar-prefix-icon {
+  position: absolute;
+  left: 10px;
+  color: #15803d;
+  pointer-events: none;
+}
+
+.completed-date-picker-input {
+  width: 100%;
+  padding: 7px 12px 7px 32px;
+  font-size: 13px;
+  font-family: inherit;
+  font-weight: 500;
+  border-radius: 8px;
+  border: 1px solid #86efac;
+  background: #ffffff;
+  color: #1f2937;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.completed-date-picker-input:focus {
+  border-color: #16a34a;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.15);
+}
+
+.save-completed-date-btn {
+  padding: 8px 16px;
+  background: #16a34a;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.25);
+}
+
+.save-completed-date-btn:hover {
+  background: #15803d;
+  transform: translateY(-1px);
+}
+
+.save-completed-date-btn.saved {
+  background: #059669;
+}
+
+/* Fact Cell Interactive Date Completed */
+.fact-cell-date-completed {
+  min-width: 160px;
+}
+
+.fact-date-val-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.fact-data-unspecified {
+  font-size: 12px;
+  font-style: italic;
+  color: var(--color-text-muted);
+}
+
+.edit-completed-date-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 10.5px;
+  font-weight: 600;
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
+  color: var(--color-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.edit-completed-date-btn:hover {
+  background: var(--color-bg-card);
+  color: var(--color-text-head);
+  border-color: var(--color-primary);
+}
+
+/* Dark mode completed date card overrides */
+.dark-mode .completed-reading-date-card,
+.theme-midnight-dark .completed-reading-date-card,
+.theme-velvet-noir .completed-reading-date-card {
+  background: linear-gradient(135deg, #13241b, #0f1c15) !important;
+  border-color: rgba(34, 197, 94, 0.35) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45), 0 0 12px rgba(34, 197, 94, 0.1) !important;
+}
+
+.dark-mode .completed-trophy-icon-wrap,
+.theme-midnight-dark .completed-trophy-icon-wrap,
+.theme-velvet-noir .completed-trophy-icon-wrap {
+  background: rgba(34, 197, 94, 0.2) !important;
+  border: 1px solid rgba(34, 197, 94, 0.35) !important;
+}
+
+.dark-mode .completed-prompt-title,
+.theme-midnight-dark .completed-prompt-title,
+.theme-velvet-noir .completed-prompt-title {
+  color: #86efac !important;
+}
+
+.dark-mode .completed-prompt-subtitle,
+.theme-midnight-dark .completed-prompt-subtitle,
+.theme-velvet-noir .completed-prompt-subtitle {
+  color: #d1d5db !important;
+}
+
+.dark-mode .completed-field-label,
+.theme-midnight-dark .completed-field-label,
+.theme-velvet-noir .completed-field-label {
+  color: #86efac !important;
+}
+
+.dark-mode .calendar-prefix-icon,
+.theme-midnight-dark .calendar-prefix-icon,
+.theme-velvet-noir .calendar-prefix-icon {
+  color: #86efac !important;
+}
+
+.dark-mode .completed-date-picker-input,
+.theme-midnight-dark .completed-date-picker-input,
+.theme-velvet-noir .completed-date-picker-input {
+  background: #1a221e !important;
+  border-color: rgba(34, 197, 94, 0.3) !important;
+  color: #f3f4f6 !important;
+  color-scheme: dark;
+}
+
+.dark-mode .save-completed-date-btn,
+.theme-midnight-dark .save-completed-date-btn,
+.theme-velvet-noir .save-completed-date-btn {
+  background: #16a34a !important;
+  color: #ffffff !important;
+}
+
+.dark-mode .save-completed-date-btn:hover,
+.theme-midnight-dark .save-completed-date-btn:hover,
+.theme-velvet-noir .save-completed-date-btn:hover {
+  background: #22c55e !important;
+}
+
 .star-rating-row {
   display: flex;
   align-items: center;
@@ -7219,11 +7459,13 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
    FLOATING PURPLE LAYERS BUTTON (Matching Screenshot Bottom-Right)
    ========================================================================== */
 
-.screenshot-floating-layers-anchor {
-  position: fixed;
-  bottom: 32px;
-  right: 36px;
-  z-index: 999;
+.screenshot-floating-layers-anchor,
+.purple-circular-layers-btn,
+.floating-layers-popover,
+.stack-floating-purple-btn {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 .purple-circular-layers-btn {
   width: 58px;
@@ -8085,22 +8327,11 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   transform: translateY(-1px);
 }
 
-/* Floating Purple Button */
+/* Floating Purple Button - Disabled & Removed as requested */
 .stack-floating-purple-btn {
-  position: absolute;
-  right: 18px;
-  bottom: 18px;
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 4px 20px rgba(124, 58, 237, 0.65);
-  z-index: 5;
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 
 /* ==========================================================================

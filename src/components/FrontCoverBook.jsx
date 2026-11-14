@@ -17,7 +17,8 @@ export default function FrontCoverBook({
   book,
   index = 0,
   onSelectBook,
-  onMarkAsRead
+  onMarkAsRead,
+  isHighlighted = false
 }) {
   const [imageError, setImageError] = useState(!book.cover);
   const { spineColor, textColor, foilColor } = getBookThematicDetails(book, index);
@@ -29,7 +30,8 @@ export default function FrontCoverBook({
 
   return (
     <motion.div
-      className="front-cover-book-card"
+      id={`shelf-book-${book.id}`}
+      className={`front-cover-book-card ${isHighlighted ? "highlighted-book-card" : ""}`}
       whileHover={{
         y: -10,
         scale: 1.03,

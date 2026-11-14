@@ -47,6 +47,7 @@ export default function AddBookModal({
       notes: "",
       started: "",
       completed: "",
+      shelfPosition: initialBook?.shelfPosition ? String(initialBook.shelfPosition) : "auto",
       spineColor: BOOK_SPINE_PALETTES[Math.floor(Math.random() * BOOK_SPINE_PALETTES.length)].bg
     }
   );
@@ -182,10 +183,8 @@ export default function AddBookModal({
       pages: Math.max(20, getOriginalBookPages(form.title, form.author, form.pages)),
       currentPage: form.currentPage || (form.status === "currently" ? 1 : null),
       rating: Number(form.rating) || 0,
-      completed:
-        form.status === "read" && !form.completed
-          ? new Date().toISOString().slice(0, 10)
-          : form.completed
+      shelfPosition: form.shelfPosition === "auto" ? "auto" : (Number(form.shelfPosition) || 1),
+      completed: form.status === "read" ? (form.completed || "") : ""
     };
 
     onSaveBook(finalBook);
@@ -656,11 +655,42 @@ export default function AddBookModal({
                   onChange={(e) => setForm({ ...form, status: e.target.value })}
                   className="status-dropdown"
                 >
-                  <option value="want">Want to Read (Goes to 3-Shelf Bookshelf)</option>
+                  <option value="want">Want to Read (Goes to Wooden Bookshelf)</option>
                   <option value="currently">Currently Reading (Ribbon on Bookshelf)</option>
                   <option value="read">Already Read (Goes to Top of 3D Stack)</option>
                 </select>
               </div>
+
+              <div className="form-field">
+                <label>Bookshelf Shelf Placement</label>
+                <select
+                  value={form.shelfPosition || "auto"}
+                  onChange={(e) => setForm({ ...form, shelfPosition: e.target.value })}
+                  className="shelf-dropdown"
+                >
+                  <option value="auto">✦ Auto (Next Available Shelf with Space)</option>
+                  <option value="1">Shelf 1 (Top Plank)</option>
+                  <option value="2">Shelf 2</option>
+                  <option value="3">Shelf 3</option>
+                  <option value="4">Shelf 4</option>
+                  <option value="5">Shelf 5 (+ New Wooden Row)</option>
+                  <option value="6">Shelf 6 (+ New Wooden Row)</option>
+                </select>
+              </div>
+
+              {form.status === "read" && (
+                <div className="form-field full-width completed-date-form-field">
+                  <label>Date Completed (When did you finish reading this book?)</label>
+                  <input
+                    type="date"
+                    value={form.completed || ""}
+                    onChange={(e) => setForm({ ...form, completed: e.target.value })}
+                    max={new Date().toISOString().slice(0, 10)}
+                    className="completed-form-date-input"
+                  />
+                  <small className="field-hint">Select the date you finished this book, or leave blank to set later.</small>
+                </div>
+              )}
 
               <div className="form-field">
                 <label>Publisher</label>

@@ -35,7 +35,7 @@ import AddBookModal from "./components/AddBookModal";
 import ThemeModal from "./components/ThemeModal";
 import ReadingJournal from "./components/ReadingJournal";
 import ReadingStats from "./components/ReadingStats";
-import { SCREENSHOT_REFERENCE_BOOKS } from "./data/screenshotBooks";
+import { USER_AUTHENTIC_COLLECTION, SCREENSHOT_REFERENCE_BOOKS } from "./data/screenshotBooks";
 import ProfileModal from "./components/ProfileModal";
 import SeasonalBanner from "./components/SeasonalBanner";
 import FestivalParticleCanvas from "./components/festivals/FestivalParticleCanvas";
@@ -72,20 +72,53 @@ export default function App() {
     }
   }, [currentUser]);
 
-  // Auto-migrate any existing books in currentUser with 280 placeholder or missing pages to verified real pages
+  // Auto-restore user's authentic book collection & migrate verified pages
   useEffect(() => {
-    if (!currentUser || !currentUser.books) return;
+    if (!currentUser) return;
+    const currentBooks = currentUser.books || [];
+    const hasUnwantedRef = currentBooks.some(
+      (b) => (b.id && b.id.startsWith("ref_")) || b.title === "The Poppy War" || b.title === "The Thursday Murder Club"
+    );
+
+    if (currentBooks.length === 0 || hasUnwantedRef) {
+      // Restore user's authentic collection
+      setCurrentUser((prev) => {
+        const updated = {
+          ...prev,
+          books: USER_AUTHENTIC_COLLECTION
+        };
+        saveCurrentUser(updated);
+        return updated;
+      });
+      return;
+    }
+
     let hasChanges = false;
-    const migrated = currentUser.books.map((b) => {
+    const DUMMY_MOCK_COMPLETED_DATES = new Set([
+      "2026-10-18",
+      "2026-10-22",
+      "2026-10-25",
+      "2026-10-28",
+      "2026-11-01",
+      "2026-11-04",
+      "2026-11-07",
+      "2026-11-09",
+      "2026-11-12"
+    ]);
+
+    const migrated = currentBooks.map((b) => {
+      let updatedBook = { ...b };
       const origPages = getOriginalBookPages(b.title, b.author, b.pages);
       if (b.pages === 280 || !b.pages || b.pages !== origPages) {
         hasChanges = true;
-        return {
-          ...b,
-          pages: origPages
-        };
+        updatedBook.pages = origPages;
       }
-      return b;
+      // Remove randomly placed placeholder mock completion dates so user is prompted to enter their real date
+      if (b.completed && DUMMY_MOCK_COMPLETED_DATES.has(b.completed)) {
+        hasChanges = true;
+        updatedBook.completed = "";
+      }
+      return updatedBook;
     });
 
     if (hasChanges) {
@@ -286,7 +319,7 @@ export default function App() {
     handleSaveBook(newBook);
   };
 
-  const handleUpdateBookStatus = (bookId, newStatus) => {
+  const handleUpdateBookStatus = (bookId, newStatus, optionalCompletedDate) => {
     if (!currentUser) return;
     setCurrentUser((prev) => {
       const updated = prev.books.map((b) => {
@@ -296,7 +329,7 @@ export default function App() {
             ...b,
             status: newStatus,
             completed: isCompletedNow
-              ? b.completed || new Date().toISOString().slice(0, 10)
+              ? (optionalCompletedDate !== undefined ? optionalCompletedDate : (b.completed || ""))
               : b.completed
           };
         }
@@ -313,11 +346,22 @@ export default function App() {
               status: newStatus,
               completed:
                 newStatus === "read"
-                  ? prev.completed || new Date().toISOString().slice(0, 10)
+                  ? (optionalCompletedDate !== undefined ? optionalCompletedDate : (prev.completed || ""))
                   : prev.completed
             }
           : null
       );
+    }
+  };
+
+  const handleUpdateBookCompletedDate = (bookId, completedDate) => {
+    if (!currentUser) return;
+    setCurrentUser((prev) => ({
+      ...prev,
+      books: prev.books.map((b) => (b.id === bookId ? { ...b, completed: completedDate } : b))
+    }));
+    if (selectedBook && selectedBook.id === bookId) {
+      setSelectedBook((prev) => (prev ? { ...prev, completed: completedDate } : null));
     }
   };
 
@@ -467,10 +511,15 @@ export default function App() {
           <nav className="desktop-nav-tabs">
             <button
               type="button"
-              className={`nav-tab-item ${activeTab === "all" ? "active" : ""}`}
-              onClick={() => setActiveTab("all")}
+              className={`nav-tab-item nav-tab-overview-icon ${activeTab === "all" ? "active" : ""}`}
+              onClick={() => {
+                setActiveTab("all");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              title="Overview"
+              aria-label="Overview"
             >
-              Overview
+              <BookOpen size={16} />
             </button>
             <button
               type="button"
@@ -561,19 +610,6 @@ export default function App() {
               <span className="dark-toggle-label">{isDarkTheme ? "Light" : "Dark"}</span>
             </button>
 
-            {/* Add Book Button */}
-            <button
-              type="button"
-              className="add-book-header-btn"
-              onClick={() => {
-                setEditingBook(null);
-                setShowAddModal(true);
-              }}
-            >
-              <Plus size={16} />
-              <span>Add Book</span>
-            </button>
-
             {/* User Profile Badge */}
             <button
               type="button"
@@ -618,7 +654,7 @@ export default function App() {
                   setShowAddModal(true);
                 }}
               >
-                <Plus size={16} /> Add a New Story
+                <Plus size={16} /> Add a New Book
               </button>
               <button
                 type="button"
@@ -675,7 +711,6 @@ export default function App() {
                   setShowAddModal(true);
                 }}
                 onMarkAsRead={handleMarkAsRead}
-                onLoadReferenceBooks={handleLoadReferenceBooks}
               />
             </div>
 
@@ -750,6 +785,7 @@ export default function App() {
             onUpdateRating={handleUpdateBookRating}
             onUpdateNotes={handleUpdateBookNotes}
             onUpdateBookmark={handleUpdateBookBookmark}
+            onUpdateCompletedDate={handleUpdateBookCompletedDate}
             onEdit={(b) => {
               setSelectedBook(null);
               setEditingBook(b);

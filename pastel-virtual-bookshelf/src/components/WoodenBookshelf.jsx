@@ -113,8 +113,6 @@ export default function WoodenBookshelf({
         onSelectBook={onSelectBook}
         onOpenAdd={onOpenAdd}
         onMarkAsRead={onMarkAsRead}
-        onToggleViewMode={(mode) => setDisplayMode(mode)}
-        onLoadReferenceBooks={onLoadReferenceBooks}
       />
     </section>
   );

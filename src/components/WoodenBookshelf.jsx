@@ -20,6 +20,7 @@ export default function WoodenBookshelf({
   onSelectBook,
   onOpenAdd,
   onMarkAsRead,
+  onUpdateShelfPosition,
   onLoadReferenceBooks
 }) {
   const [displayMode, setDisplayMode] = useState("cover"); // 'cover' (matches screenshot) | 'spine'
@@ -113,8 +114,7 @@ export default function WoodenBookshelf({
         onSelectBook={onSelectBook}
         onOpenAdd={onOpenAdd}
         onMarkAsRead={onMarkAsRead}
-        onToggleViewMode={(mode) => setDisplayMode(mode)}
-        onLoadReferenceBooks={onLoadReferenceBooks}
+        onUpdateShelfPosition={onUpdateShelfPosition}
       />
     </section>
   );
