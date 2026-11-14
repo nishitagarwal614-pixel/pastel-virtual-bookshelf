@@ -3,15 +3,16 @@ import { motion } from "framer-motion";
 import { CheckCircle, Eye, Bookmark } from "lucide-react";
 import BookSpine from "./BookSpine";
 import { calculateSpineThickness, calculateBookHeight } from "../utils/bookDimensions";
+import { getOriginalBookPages } from "../data/verifiedBookPages";
 
 /**
  * RealisticBook.jsx
  * 
  * Renders an individual 3D physical book standing on a wooden shelf:
- * - Dynamic spine width based on page count
+ * - Dynamic spine width based on verified page count
  * - Dynamic height variation
  * - 3D top paper block & board edges
- * - Bookmark ribbon if Currently Reading
+ * - Bookmark ribbon if Currently Reading (showing page number)
  * - Optional natural leaning angle
  * - 3D lift hover interaction
  */
@@ -22,8 +23,9 @@ export default function RealisticBook({
   onSelectBook,
   onMarkAsRead
 }) {
-  const thickness = calculateSpineThickness(book.pages, false);
-  const height = calculateBookHeight(book.pages, book.id);
+  const verifiedPages = getOriginalBookPages(book.title, book.author, book.pages);
+  const thickness = calculateSpineThickness(verifiedPages, false);
+  const height = calculateBookHeight(verifiedPages, book.id);
   const isCurrentlyReading = book.status === "currently";
 
   // Calculate lean rotation
@@ -46,7 +48,7 @@ export default function RealisticBook({
         transition: { type: "spring", stiffness: 350, damping: 22 }
       }}
       onClick={() => onSelectBook(book)}
-      title={`"${book.title}" by ${book.author} (${book.pages || 280} pages)`}
+      title={`"${book.title}" by ${book.author} (${verifiedPages} pages)`}
     >
       {/* 3D Physical Book Structure */}
       <div className="physical-book-3d-box">

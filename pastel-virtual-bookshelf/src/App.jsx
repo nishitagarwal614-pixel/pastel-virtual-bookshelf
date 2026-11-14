@@ -42,6 +42,7 @@ import FestivalParticleCanvas from "./components/festivals/FestivalParticleCanva
 import FestivalSelector from "./components/festivals/FestivalSelector";
 import FestivalHub from "./components/festivals/FestivalHub";
 import { getFestivalThemeById } from "./data/festivalData";
+import { getOriginalBookPages } from "./data/verifiedBookPages";
 
 export default function App() {
   // Active User & All Users state
@@ -70,6 +71,30 @@ export default function App() {
       setAllUsers(loadUsers());
     }
   }, [currentUser]);
+
+  // Auto-migrate any existing books in currentUser with 280 placeholder or missing pages to verified real pages
+  useEffect(() => {
+    if (!currentUser || !currentUser.books) return;
+    let hasChanges = false;
+    const migrated = currentUser.books.map((b) => {
+      const origPages = getOriginalBookPages(b.title, b.author, b.pages);
+      if (b.pages === 280 || !b.pages || b.pages !== origPages) {
+        hasChanges = true;
+        return {
+          ...b,
+          pages: origPages
+        };
+      }
+      return b;
+    });
+
+    if (hasChanges) {
+      setCurrentUser((prev) => ({
+        ...prev,
+        books: migrated
+      }));
+    }
+  }, []);
 
   // Apply CSS theme variables to root document
   const activeThemeId = currentUser?.theme || "sage-cream";
@@ -243,17 +268,19 @@ export default function App() {
   };
 
   const handleAddQuickBook = (bookData) => {
+    const pages = getOriginalBookPages(bookData.title, bookData.author, bookData.pages);
     const newBook = {
       id: `book_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
       title: bookData.title || "Untitled Book",
       author: bookData.author || "Unknown Author",
       genre: bookData.genre || "Fiction",
-      pages: Number(bookData.pages) || 280,
+      pages,
       coverColor: bookData.coverColor || "#6a7b67",
       coverImage: bookData.coverImage || "",
       status: bookData.status || "want",
       rating: bookData.rating || 5,
       notes: bookData.notes || "",
+      currentPage: bookData.currentPage || (bookData.status === "currently" ? 1 : null),
       created: new Date().toISOString()
     };
     handleSaveBook(newBook);
@@ -317,6 +344,18 @@ export default function App() {
     }));
     if (selectedBook && selectedBook.id === bookId) {
       setSelectedBook((prev) => (prev ? { ...prev, notes } : null));
+    }
+  };
+
+  const handleUpdateBookBookmark = (bookId, currentPage) => {
+    if (!currentUser) return;
+    const pageNum = Math.max(1, Number(currentPage) || 1);
+    setCurrentUser((prev) => ({
+      ...prev,
+      books: prev.books.map((b) => (b.id === bookId ? { ...b, currentPage: pageNum } : b))
+    }));
+    if (selectedBook && selectedBook.id === bookId) {
+      setSelectedBook((prev) => (prev ? { ...prev, currentPage: pageNum } : null));
     }
   };
 
@@ -710,6 +749,7 @@ export default function App() {
             onUpdateStatus={handleUpdateBookStatus}
             onUpdateRating={handleUpdateBookRating}
             onUpdateNotes={handleUpdateBookNotes}
+            onUpdateBookmark={handleUpdateBookBookmark}
             onEdit={(b) => {
               setSelectedBook(null);
               setEditingBook(b);

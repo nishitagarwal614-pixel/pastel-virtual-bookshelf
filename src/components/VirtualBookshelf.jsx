@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Plus, BookOpen, CheckCircle, Trash2, ArrowUpRight, Bookmark, Sparkles } from "lucide-react";
+import { getOriginalBookPages } from "../data/verifiedBookPages";
 
 export default function VirtualBookshelf({
   books,
@@ -209,8 +210,8 @@ export default function VirtualBookshelf({
                     const isHorizontalStack = bIdx === 0 && shelfBooks.length >= 6;
                     const isCurrentlyReading = book.status === "currently";
 
-                    // Dynamic height and spine width according to pages
-                    const pagesNum = Number(book.pages) || 280;
+                    // Dynamic height and spine width according to verified pages
+                    const pagesNum = getOriginalBookPages(book.title, book.author, book.pages);
                     const spineWidth = Math.min(54, Math.max(30, Math.round(pagesNum / 13)));
                     const spineHeight = Math.min(235, Math.max(180, 185 + (bIdx % 4) * 12));
 

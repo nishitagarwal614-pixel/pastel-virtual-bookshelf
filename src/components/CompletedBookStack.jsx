@@ -1,46 +1,77 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Layers } from "lucide-react";
+import { getOriginalBookPages } from "../data/verifiedBookPages.js";
 
 /**
  * CompletedBookStack.jsx
  * 
  * Physically authentic, vibrant paperback book stack:
- * - Highly vibrant, rich jewel-toned color palette (Emerald, Ruby Rose, Sunlit Honey Amber,
- *   Fiery Coral Terracotta, Royal Cobalt Blue, Royal Orchid Magenta, Peacock Turquoise)
- * - Dynamic spine thickness (height) calibrated directly to page counts:
- *   - Warmth (208 pgs): 24px (ultra-slender poetry)
- *   - I Don't Love You Anymore (220 pgs): 26px (slender poetry)
- *   - The Housemaid & The Silent Patient (336 pgs): 38px (standard novel)
- *   - Good Girl, Bad Blood (432 pgs): 48px (thick YA thriller)
- *   - A Good Girl's Guide to Murder (448 pgs): 50px (thick YA thriller)
- *   - As Good as Dead (464 pgs): 54px (chunky trilogy finale)
- * - Trim size width & height variation authentic to real-world book dimensions
- * - Complete, untruncated titles with dynamic font scaling
+ * - Natural authentic book trim widths (books can be stacked in ANY order,
+ *   NOT forced into a continuous shortest-to-longest pyramid)
+ * - Highly vibrant, rich jewel-toned color palette
+ * - Dynamic spine thickness calibrated directly to real verified page counts
+ * - Clean title & author layout with guaranteed zero overlap
  * - Cylindrical 3D lighting sheen & foil embossing
  * - Golden oak wooden shelf plank below the stack
- * - Italic "tap one to read your note" footer
- * - Floating circular purple layers button
  */
 
 export const VIBRANT_READ_STACK_BOOKS = [
+  {
+    id: "stack_subtle_art",
+    title: "THE SUBTLE ART OF NOT GIVING A F*CK",
+    fullTitle: "The Subtle Art of Not Giving a F*ck",
+    author: "MARK MANSON",
+    pages: 224,
+    thickness: 28,
+    widthPercent: 96,
+    maxWidth: 390,
+    bgColor: "#047857", // Jewel Emerald Green
+    accentBarColor: "#fde047",
+    titleColor: "#fef08a",
+    authorColor: "#fef9c3",
+    bestsellerColor: "#fde047",
+    iconColor: "#fde047",
+    iconBoxBorder: "rgba(253, 224, 71, 0.7)",
+    icon: "key",
+    notes: "A counterintuitive approach to living a good life."
+  },
+  {
+    id: "stack_too_good",
+    title: "TOO GOOD TO BE TRUE",
+    fullTitle: "Too Good To Be True",
+    author: "PRAJAKTA KOLI",
+    pages: 240,
+    thickness: 30,
+    widthPercent: 95,
+    maxWidth: 385,
+    bgColor: "#e11d48", // Rose Ruby
+    accentBarColor: "#fecdd3",
+    titleColor: "#ffffff",
+    authorColor: "#ffe4e6",
+    bestsellerColor: "#fecdd3",
+    iconColor: "#fecdd3",
+    iconBoxBorder: "rgba(254, 205, 211, 0.7)",
+    icon: "heart",
+    notes: "A tender, heartfelt romance exploring love and second chances."
+  },
   {
     id: "stack_housemaid",
     title: "THE HOUSEMAID",
     fullTitle: "The Housemaid",
     author: "FREIDA MCFADDEN",
     pages: 336,
-    thickness: 38, // Standard novel
-    widthPercent: 93,
-    maxWidth: 375,
-    bgColor: "#047857", // Vibrant Jewel Emerald Green
-    accentBarColor: "#fde047", // Luminous Gold
-    titleColor: "#fef08a", // Gleaming Gold foil
-    authorColor: "#fef9c3",
-    bestsellerColor: "#fde047",
-    iconColor: "#fde047",
-    iconBoxBorder: "rgba(253, 224, 71, 0.7)",
-    icon: "key",
+    thickness: 38,
+    widthPercent: 97,
+    maxWidth: 395,
+    bgColor: "#d97706", // Amber / Warm Honey Gold
+    accentBarColor: "#ffffff",
+    titleColor: "#ffffff",
+    authorColor: "#fef3c7",
+    bestsellerColor: "#fef08a",
+    iconColor: "#fef3c7",
+    iconBoxBorder: "rgba(254, 243, 199, 0.75)",
+    icon: "bird",
     notes: "A thrilling, addictive masterpiece. Millie's journey with the Winchesters is unforgettable."
   },
   {
@@ -49,17 +80,17 @@ export const VIBRANT_READ_STACK_BOOKS = [
     fullTitle: "I Don't Love You Anymore",
     author: "RITHVIK SINGH",
     pages: 220,
-    thickness: 26, // Slender poetry book!
-    widthPercent: 84,
-    maxWidth: 335,
-    bgColor: "#e11d48", // Vibrant Rich Rose Ruby / Crimson
-    accentBarColor: "#fecdd3", // Rose-tinted silver
+    thickness: 26,
+    widthPercent: 94,
+    maxWidth: 380,
+    bgColor: "#ea580c", // Fiery Sunset Coral
+    accentBarColor: "#ffedd5",
     titleColor: "#ffffff",
-    authorColor: "#ffe4e6",
-    bestsellerColor: "#fecdd3",
-    iconColor: "#fecdd3",
-    iconBoxBorder: "rgba(254, 205, 211, 0.7)",
-    icon: "heart",
+    authorColor: "#ffedd5",
+    bestsellerColor: "#fed7aa",
+    iconColor: "#fed7aa",
+    iconBoxBorder: "rgba(254, 215, 170, 0.75)",
+    icon: "book",
     notes: "Moving words on letting go of people who could not love you the way you needed."
   },
   {
@@ -68,17 +99,17 @@ export const VIBRANT_READ_STACK_BOOKS = [
     fullTitle: "Warmth",
     author: "RITHVIK SINGH",
     pages: 208,
-    thickness: 24, // Very slender poetry book!
-    widthPercent: 85,
-    maxWidth: 340,
-    bgColor: "#d97706", // Vibrant Luminous Amber / Warm Honey Gold
-    accentBarColor: "#ffffff", // Pure Ivory White
+    thickness: 24,
+    widthPercent: 95,
+    maxWidth: 385,
+    bgColor: "#1d4ed8", // Royal Cobalt Sapphire
+    accentBarColor: "#bfdbfe",
     titleColor: "#ffffff",
-    authorColor: "#fef3c7",
-    bestsellerColor: "#fef08a",
-    iconColor: "#fef3c7",
-    iconBoxBorder: "rgba(254, 243, 199, 0.75)",
-    icon: "bird",
+    authorColor: "#dbeafe",
+    bestsellerColor: "#93c5fd",
+    iconColor: "#bfdbfe",
+    iconBoxBorder: "rgba(191, 219, 254, 0.75)",
+    icon: "book",
     notes: "A gentle reminder that kindness and soft days will find you again."
   },
   {
@@ -87,16 +118,16 @@ export const VIBRANT_READ_STACK_BOOKS = [
     fullTitle: "As Good as Dead",
     author: "HOLLY JACKSON",
     pages: 464,
-    thickness: 54, // Very thick, chunky 464-page finale!
-    widthPercent: 96,
-    maxWidth: 386,
-    bgColor: "#ea580c", // Vibrant Fiery Coral / Sunset Terracotta
-    accentBarColor: "#ffedd5",
+    thickness: 52,
+    widthPercent: 98,
+    maxWidth: 395,
+    bgColor: "#86198f", // Royal Orchid Magenta
+    accentBarColor: "#f5d0fe",
     titleColor: "#ffffff",
-    authorColor: "#ffedd5",
-    bestsellerColor: "#fed7aa",
-    iconColor: "#fed7aa",
-    iconBoxBorder: "rgba(254, 215, 170, 0.75)",
+    authorColor: "#fae8ff",
+    bestsellerColor: "#f5d0fe",
+    iconColor: "#f5d0fe",
+    iconBoxBorder: "rgba(245, 208, 254, 0.75)",
     icon: "book",
     notes: "The heart-stopping finale of A Good Girl's Guide to Murder series."
   },
@@ -106,17 +137,17 @@ export const VIBRANT_READ_STACK_BOOKS = [
     fullTitle: "Good Girl, Bad Blood",
     author: "HOLLY JACKSON",
     pages: 432,
-    thickness: 48, // Thick 432-page YA thriller!
-    widthPercent: 94,
-    maxWidth: 378,
-    bgColor: "#1d4ed8", // Vibrant Royal Cobalt / Saturated Sapphire Blue
-    accentBarColor: "#bfdbfe",
+    thickness: 48,
+    widthPercent: 96,
+    maxWidth: 390,
+    bgColor: "#0891b2", // Ocean Peacock Turquoise
+    accentBarColor: "#cffafe",
     titleColor: "#ffffff",
-    authorColor: "#dbeafe",
-    bestsellerColor: "#93c5fd",
-    iconColor: "#bfdbfe",
-    iconBoxBorder: "rgba(191, 219, 254, 0.75)",
-    icon: "book",
+    authorColor: "#ecfeff",
+    bestsellerColor: "#a5f3fc",
+    iconColor: "#cffafe",
+    iconBoxBorder: "rgba(207, 250, 254, 0.75)",
+    icon: "quill",
     notes: "Pip Fitz-Amobi is back with a podcast and a missing person case."
   },
   {
@@ -125,17 +156,17 @@ export const VIBRANT_READ_STACK_BOOKS = [
     fullTitle: "A Good Girl's Guide to Murder",
     author: "HOLLY JACKSON",
     pages: 448,
-    thickness: 50, // Thick 448-page mystery!
-    widthPercent: 98,
-    maxWidth: 394,
-    bgColor: "#86198f", // Vibrant Royal Orchid / Deep Fuchsia Magenta
-    accentBarColor: "#f5d0fe",
-    titleColor: "#ffffff",
-    authorColor: "#fae8ff",
-    bestsellerColor: "#f5d0fe",
-    iconColor: "#f5d0fe",
-    iconBoxBorder: "rgba(245, 208, 254, 0.75)",
-    icon: "book",
+    thickness: 50,
+    widthPercent: 97,
+    maxWidth: 395,
+    bgColor: "#047857", // Forest Emerald
+    accentBarColor: "#fde047",
+    titleColor: "#fef08a",
+    authorColor: "#fef9c3",
+    bestsellerColor: "#fde047",
+    iconColor: "#fde047",
+    iconBoxBorder: "rgba(253, 224, 71, 0.7)",
+    icon: "key",
     notes: "The investigation into Sal Singh and Andie Bell that started it all."
   },
   {
@@ -144,17 +175,17 @@ export const VIBRANT_READ_STACK_BOOKS = [
     fullTitle: "The Silent Patient",
     author: "ALEX MICHAELIDES",
     pages: 336,
-    thickness: 38, // Standard 336-page novel
-    widthPercent: 100,
-    maxWidth: 400,
-    bgColor: "#0891b2", // Vibrant Ocean Peacock Turquoise Cyan
-    accentBarColor: "#cffafe",
+    thickness: 38,
+    widthPercent: 96,
+    maxWidth: 390,
+    bgColor: "#e11d48", // Ruby Crimson
+    accentBarColor: "#fecdd3",
     titleColor: "#ffffff",
-    authorColor: "#ecfeff",
-    bestsellerColor: "#a5f3fc",
-    iconColor: "#cffafe",
-    iconBoxBorder: "rgba(207, 250, 254, 0.75)",
-    icon: "quill",
+    authorColor: "#ffe4e6",
+    bestsellerColor: "#fecdd3",
+    iconColor: "#fecdd3",
+    iconBoxBorder: "rgba(254, 205, 211, 0.7)",
+    icon: "heart",
     notes: "Alicia Berenson's silence hides the deepest secret of all."
   }
 ];
@@ -227,24 +258,25 @@ export default function CompletedBookStack({
   const displayBooks = isDemo
     ? VIBRANT_READ_STACK_BOOKS
     : userReadBooks.map((b, idx) => {
-        const pages = Number(b.pages) || 320;
-        // Dynamically compute spine thickness directly from page count (24px to 54px)
+        const pages = getOriginalBookPages(b.title, b.author, b.pages);
+        // Dynamically compute spine thickness directly from real page count (24px to 54px)
         const thickness = Math.min(54, Math.max(24, Math.round(14 + pages * 0.082)));
-        const total = userReadBooks.length;
-        const progress = total > 1 ? idx / (total - 1) : 1;
-        const widthPercent = (84 + progress * 16).toFixed(1);
+        // Natural realistic trim width: 94% to 98% with subtle organic variance (NOT a monotonic pyramid)
+        // Can be displayed in ANY order as requested ("they can be in any order")
+        const hash = Math.abs((b.title || "").split("").reduce((acc, c) => acc + c.charCodeAt(0), idx * 13));
+        const widthPercent = (93.5 + (hash % 5) * 1.1).toFixed(1);
         const palette = VIBRANT_PALETTE[idx % VIBRANT_PALETTE.length];
         
         return {
           id: b.id,
-          title: b.title.toUpperCase(), // Untruncated full title
+          title: (b.title || "UNTITLED").toUpperCase(),
           fullTitle: b.title,
           author: (b.author || "AUTHOR").toUpperCase(),
           pages,
           thickness,
           widthPercent,
-          maxWidth: 335 + Math.round(progress * 65),
-          bgColor: palette.bg,
+          maxWidth: 385 + (hash % 12),
+          bgColor: b.coverColor || palette.bg,
           accentBarColor: palette.bar,
           titleColor: palette.text,
           authorColor: palette.text,
@@ -252,12 +284,13 @@ export default function CompletedBookStack({
           iconColor: palette.bar,
           iconBoxBorder: palette.border,
           icon: palette.icon,
-          notes: b.notes
+          notes: b.notes,
+          currentPage: b.currentPage
         };
       });
 
-  const totalCount = isDemo ? 7 : userReadBooks.length;
-  const totalPagesRead = isDemo ? 1960 : userReadBooks.reduce((sum, b) => sum + (Number(b.pages) || 280), 0);
+  const totalCount = displayBooks.length;
+  const totalPagesRead = displayBooks.reduce((sum, b) => sum + (Number(b.pages) || 0), 0);
 
   return (
     <section className="exact-screenshot-stack-panel" id="read-books-stack">
@@ -282,37 +315,40 @@ export default function CompletedBookStack({
 
           // Responsive typographic sizing based on title length & spine height
           let titleFontSize = "13px";
-          let titleLetterSpacing = "0.5px";
+          let titleLetterSpacing = "0.4px";
 
           if (isThin) {
-            if (titleLength > 20) {
-              titleFontSize = "10px";
+            if (titleLength > 24) {
+              titleFontSize = "9.5px";
+              titleLetterSpacing = "0.1px";
+            } else if (titleLength > 16) {
+              titleFontSize = "10.5px";
               titleLetterSpacing = "0.2px";
-            } else if (titleLength > 12) {
-              titleFontSize = "11px";
-              titleLetterSpacing = "0.4px";
             } else {
-              titleFontSize = "12px";
-              titleLetterSpacing = "0.6px";
+              titleFontSize = "11.5px";
+              titleLetterSpacing = "0.4px";
             }
           } else if (isThick) {
-            if (titleLength > 24) {
-              titleFontSize = "11.5px";
-              titleLetterSpacing = "0.25px";
+            if (titleLength > 26) {
+              titleFontSize = "11px";
+              titleLetterSpacing = "0.2px";
             } else if (titleLength > 16) {
-              titleFontSize = "13px";
-              titleLetterSpacing = "0.4px";
+              titleFontSize = "12.5px";
+              titleLetterSpacing = "0.3px";
             } else {
-              titleFontSize = "15px";
-              titleLetterSpacing = "0.8px";
+              titleFontSize = "14px";
+              titleLetterSpacing = "0.6px";
             }
           } else {
-            if (titleLength > 22) {
+            if (titleLength > 26) {
+              titleFontSize = "10.5px";
+              titleLetterSpacing = "0.15px";
+            } else if (titleLength > 18) {
               titleFontSize = "11.5px";
               titleLetterSpacing = "0.25px";
             } else {
               titleFontSize = "13px";
-              titleLetterSpacing = "0.5px";
+              titleLetterSpacing = "0.4px";
             }
           }
 
@@ -327,7 +363,20 @@ export default function CompletedBookStack({
               }}
               whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => onSelectBook && onSelectBook(book)}
+              onClick={() => {
+                if (onSelectBook) {
+                  const origUserBook = userReadBooks.find((ub) => ub.id === book.id);
+                  onSelectBook(origUserBook ? { ...origUserBook, pages: book.pages } : {
+                    id: book.id,
+                    title: book.fullTitle || book.title,
+                    author: book.author,
+                    pages: book.pages,
+                    status: "read",
+                    notes: book.notes,
+                    coverColor: book.bgColor
+                  });
+                }
+              }}
               title={`"${book.fullTitle || book.title}" by ${book.author} (${book.pages} pages) — Tap to view note`}
             >
               <div

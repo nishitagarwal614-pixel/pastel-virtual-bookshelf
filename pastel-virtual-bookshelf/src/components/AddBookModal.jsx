@@ -10,6 +10,7 @@ import {
 } from "../constants";
 import BookSpine from "./BookSpine";
 import { calculateSpineThickness } from "../utils/bookDimensions";
+import { getOriginalBookPages } from "../data/verifiedBookPages";
 
 export default function AddBookModal({
   existingBooks = [],
@@ -35,7 +36,7 @@ export default function AddBookModal({
       author: "",
       genre: "Spirituality & Inner Peace",
       year: new Date().getFullYear().toString(),
-      pages: 280,
+      pages: 320,
       format: "Hardcover",
       publisher: "",
       isbn: "",
@@ -129,7 +130,11 @@ export default function AddBookModal({
       return;
     }
 
-    const pages = chosenEdition?.pages || selectedBook.pages || 280;
+    const pages = getOriginalBookPages(
+      selectedBook.title,
+      selectedBook.author,
+      chosenEdition?.pages || selectedBook.pages
+    );
     const year = chosenEdition?.year || selectedBook.year || "";
     const publisher = chosenEdition?.publisher || selectedBook.publisher || "Library Edition";
     const format = chosenEdition?.format || selectedBook.format || "Hardcover";
@@ -174,7 +179,8 @@ export default function AddBookModal({
     const finalBook = {
       ...form,
       id: initialBook?.id || "book_" + Math.random().toString(36).substring(2, 9),
-      pages: Math.max(50, Number(form.pages) || 280),
+      pages: Math.max(20, getOriginalBookPages(form.title, form.author, form.pages)),
+      currentPage: form.currentPage || (form.status === "currently" ? 1 : null),
       rating: Number(form.rating) || 0,
       completed:
         form.status === "read" && !form.completed
@@ -576,7 +582,7 @@ export default function AddBookModal({
                 />
               </div>
               <small className="thickness-indicator">
-                {form.pages || 280} pages → {previewThickness}px thickness
+                {form.pages || 320} pages → {previewThickness}px thickness
               </small>
             </div>
 

@@ -42,7 +42,17 @@ export default function FrontCoverBook({
       <div className="front-cover-3d-wrapper">
         {/* Bookmark Ribbon on top if currently reading */}
         {isCurrentlyReading && (
-          <div className="cover-ribbon-tag" title="Currently Reading">
+          <div
+            className={`cover-ribbon-tag ${book.currentPage ? "with-page" : "ask-bookmark"}`}
+            title={
+              book.currentPage
+                ? `Currently Reading — Bookmarked on page ${book.currentPage}`
+                : "Currently Reading — Tap to add your bookmark page!"
+            }
+          >
+            <span className="ribbon-text-inner">
+              {book.currentPage ? `🔖 p.${book.currentPage}` : "🔖 Bookmark"}
+            </span>
             <span className="ribbon-tail" />
           </div>
         )}

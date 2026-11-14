@@ -14,13 +14,16 @@ import {
   BookOpen
 } from "lucide-react";
 import Book3DViewer from "./Book3DViewer";
+import { getOriginalBookPages } from "../data/verifiedBookPages.js";
 
 /**
  * BookDetails.jsx
  * 
  * Detailed book inspection view:
  * - Realistic 3D Hardcover Model Viewer with 360-degree interactive rotation
- * - Full verified bibliographic metadata
+ * - Full verified original publication page count (replaces arbitrary 280)
+ * - Currently Reading Bookmark Tracker:
+ *   Prompts the reader: "You're currently reading this book! Where are you at? Add a bookmark on the page you are on."
  * - Reading status selector (Want / Currently / Read)
  * - 5-star interactive rating
  * - Journal review & reflection editor
@@ -32,12 +35,34 @@ export default function BookDetails({
   onUpdateStatus,
   onUpdateRating,
   onUpdateNotes,
+  onUpdateBookmark,
   onEdit,
   onDelete
 }) {
   const [activeTab, setActiveTab] = useState("overview"); // 'overview' | 'notes'
   const [userNotes, setUserNotes] = useState(book.notes || "");
   const [isSavedNotes, setIsSavedNotes] = useState(false);
+
+  // Genuine verified page count for this specific book
+  const originalPages = getOriginalBookPages(book.title, book.author, book.pages);
+
+  // Bookmark tracking for currently reading books
+  const [currentPage, setCurrentPage] = useState(
+    book.currentPage ? Math.min(originalPages, Math.max(1, Number(book.currentPage))) : 1
+  );
+  const [isSavedBookmark, setIsSavedBookmark] = useState(false);
+
+  const handleStepPage = (delta) => {
+    setCurrentPage((prev) => Math.min(originalPages, Math.max(1, prev + delta)));
+  };
+
+  const handleSaveBookmark = () => {
+    if (onUpdateBookmark) {
+      onUpdateBookmark(book.id, currentPage);
+    }
+    setIsSavedBookmark(true);
+    setTimeout(() => setIsSavedBookmark(false), 2200);
+  };
 
   const handleNotesSave = (e) => {
     e.preventDefault();
@@ -92,7 +117,7 @@ export default function BookDetails({
               <span className="genre-chip">{book.genre || "Literature"}</span>
               {book.year && <span className="year-chip">Published {book.year}</span>}
               <span className="pages-chip">
-                <Layers size={11} /> {book.pages || 280} pages
+                <Layers size={11} /> {originalPages} pages
               </span>
             </div>
 
@@ -116,6 +141,115 @@ export default function BookDetails({
                 ))}
               </div>
             </div>
+
+            {/* Bookmark & Progress Section for Currently Reading Books */}
+            {book.status === "currently" && (
+              <motion.div
+                className="currently-reading-bookmark-card"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25 }}
+              >
+                <div className="bookmark-card-header">
+                  <div className="bookmark-ribbon-icon-wrap">
+                    <span className="bookmark-emoji-icon">🔖</span>
+                  </div>
+                  <div className="bookmark-header-text">
+                    <h4 className="bookmark-prompt-title">You're currently reading this book!</h4>
+                    <p className="bookmark-prompt-subtitle">
+                      Where are you at? Add a bookmark on the page you are on.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bookmark-controls-grid">
+                  <div className="bookmark-stepper-wrap">
+                    <span className="bookmark-field-label">Current Page:</span>
+                    <div className="bookmark-steppers-row">
+                      <button
+                        type="button"
+                        className="page-step-btn"
+                        onClick={() => handleStepPage(-10)}
+                        title="Back 10 pages"
+                      >
+                        -10
+                      </button>
+                      <button
+                        type="button"
+                        className="page-step-btn"
+                        onClick={() => handleStepPage(-1)}
+                        title="Back 1 page"
+                      >
+                        -1
+                      </button>
+                      <div className="bookmark-input-affix-wrap">
+                        <span className="input-page-prefix">p.</span>
+                        <input
+                          type="number"
+                          min={1}
+                          max={originalPages}
+                          value={currentPage}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value, 10);
+                            if (!isNaN(val)) {
+                              setCurrentPage(Math.min(originalPages, Math.max(1, val)));
+                            }
+                          }}
+                          className="bookmark-page-input"
+                        />
+                        <span className="input-page-total">/ {originalPages}</span>
+                      </div>
+                      <button
+                        type="button"
+                        className="page-step-btn"
+                        onClick={() => handleStepPage(1)}
+                        title="Forward 1 page"
+                      >
+                        +1
+                      </button>
+                      <button
+                        type="button"
+                        className="page-step-btn"
+                        onClick={() => handleStepPage(10)}
+                        title="Forward 10 pages"
+                      >
+                        +10
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="bookmark-action-col">
+                    <button
+                      type="button"
+                      className={`save-bookmark-btn ${isSavedBookmark ? "saved" : ""}`}
+                      onClick={handleSaveBookmark}
+                    >
+                      {isSavedBookmark ? "Bookmark Placed! ✓" : "Place Bookmark 🔖"}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Progress bar */}
+                <div className="bookmark-progress-container">
+                  <div className="bookmark-bar-track">
+                    <div
+                      className="bookmark-bar-fill"
+                      style={{
+                        width: `${Math.min(100, Math.max(2, Math.round((currentPage / originalPages) * 100)))}%`
+                      }}
+                    />
+                  </div>
+                  <div className="bookmark-progress-labels">
+                    <span className="progress-percent">
+                      {Math.round((currentPage / originalPages) * 100)}% read
+                    </span>
+                    <span className="progress-remaining">
+                      {Math.max(0, originalPages - currentPage)} pages remaining
+                    </span>
+                  </div>
+                </div>
+              </motion.div>
+            )}
 
             {/* Star Rating Row */}
             <div className="star-rating-row">

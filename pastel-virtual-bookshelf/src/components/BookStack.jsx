@@ -1,6 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { BookCheck, Sparkles, Layers, Star, Plus, Coffee } from "lucide-react";
+import { getOriginalBookPages } from "../data/verifiedBookPages";
 
 export default function BookStack({ books, onSelectBook, onOpenAdd }) {
   // Filter read books:
@@ -72,8 +73,8 @@ export default function BookStack({ books, onSelectBook, onOpenAdd }) {
                 const tiltAngle = ((idx % 2 === 0 ? 1 : -1) * ((idx % 4) * 0.9 + 0.6)).toFixed(1);
                 const shiftX = ((idx % 3 - 1) * 7).toFixed(1);
 
-                // Book thickness based on pages
-                const pagesNum = Number(book.pages) || 280;
+                // Book thickness based on verified pages
+                const pagesNum = getOriginalBookPages(book.title, book.author, book.pages);
                 const bookThickness = Math.min(50, Math.max(34, Math.round(pagesNum / 12)));
 
                 return (

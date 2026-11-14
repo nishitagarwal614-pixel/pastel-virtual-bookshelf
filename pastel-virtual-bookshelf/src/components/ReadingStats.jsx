@@ -1,5 +1,6 @@
 import React from "react";
 import { Star, Library, BookOpen, Bookmark, CheckCircle, Target, Award, Layers } from "lucide-react";
+import { getOriginalBookPages } from "../data/verifiedBookPages";
 
 export default function ReadingStats({
   books = [],
@@ -17,7 +18,7 @@ export default function ReadingStats({
   );
 
   const totalPagesRead = readBooks.reduce(
-    (sum, b) => sum + (Number(b.pages) || 280),
+    (sum, b) => sum + getOriginalBookPages(b.title, b.author, b.pages),
     0
   );
 

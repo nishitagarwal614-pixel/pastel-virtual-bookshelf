@@ -1,5 +1,6 @@
 import { BOOK_SPINE_PALETTES } from "./constants.js";
 import { VEDABASE_COLLECTION, VEDABASE_AUTHORS, isVedabaseQuery } from "./vedabaseData.js";
+import { getOriginalBookPages } from "./data/verifiedBookPages.js";
 export { VEDABASE_COLLECTION, VEDABASE_AUTHORS, isVedabaseQuery };
 
 /**
@@ -810,11 +811,12 @@ export async function searchBooksApi(rawQuery, searchType = "all", languageFilte
         seenKeys.add(dedupeKey);
 
         const year = doc.first_publish_year ? String(doc.first_publish_year) : "";
-        const pages = doc.number_of_pages_median
+        const rawPages = doc.number_of_pages_median
           ? Number(doc.number_of_pages_median)
           : doc.number_of_pages
           ? Number(doc.number_of_pages)
-          : 280;
+          : null;
+        const pages = getOriginalBookPages(title, author, rawPages);
 
         const publisher = Array.isArray(doc.publisher)
           ? doc.publisher[0]
